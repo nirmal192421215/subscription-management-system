@@ -1,0 +1,88 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Configure Subscription | Brightloop{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Wizard Progress -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex items-center space-x-2 mb-5">
+            <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                <i class="fa-solid fa-sliders text-lg"></i>
+            </span>
+            <div>
+                <h1 class="text-2xl font-black text-slate-900">Configure Your Subscription</h1>
+                <p class="text-xs text-slate-500">Plan: <strong>{{ plan.name }}</strong> — ${{ plan.cost }} / {{ plan.get_billing_interval_display }}</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 flex-1">
+                <div class="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-sm font-bold shrink-0">
+                    <i class="fa-solid fa-check text-xs"></i>
+                </div>
+                <div class="flex-1 h-1.5 rounded-full bg-emerald-400"></div>
+            </div>
+            <div class="flex items-center space-x-2 flex-1">
+                <div class="w-8 h-8 rounded-full bg-[#714B67] text-white flex items-center justify-center text-sm font-bold shrink-0">2</div>
+                <div class="flex-1 h-1.5 rounded-full bg-slate-200"></div>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold shrink-0">3</div>
+        </div>
+        <div class="flex justify-between mt-1 text-[11px] text-slate-400 font-medium">
+            <span class="text-emerald-600 font-bold">✓ Plan Chosen</span>
+            <span class="text-[#714B67] font-bold ml-[-30px]">Configure</span>
+            <span>Confirm</span>
+        </div>
+    </div>
+
+    <!-- Config Form -->
+    <form method="POST" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-5">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Number of Seats / Quantity</label>
+                <input type="number" name="quantity" min="{{ plan.min_quantity }}" value="{{ plan.min_quantity }}"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none text-sm font-medium">
+                <p class="text-[11px] text-slate-400 mt-1">Minimum: {{ plan.min_quantity }} seat(s)</p>
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">Start Date</label>
+                <input type="date" name="start_date" value="{{ today }}"
+                    class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none text-sm">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">Notes (optional)</label>
+            <textarea name="notes" rows="3" placeholder="Any special instructions or requirements…"
+                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none text-sm resize-none"></textarea>
+        </div>
+
+        <!-- Plan feature summary -->
+        <div class="bg-purple-50 rounded-xl p-4 border border-purple-100">
+            <h3 class="text-xs font-bold text-[#714B67] mb-2">Plan Summary</h3>
+            <div class="grid grid-cols-2 gap-2 text-xs text-slate-600">
+                <div><i class="fa-solid fa-calendar text-[#714B67] mr-1.5"></i>Billing: <strong>{{ plan.get_billing_interval_display }}</strong></div>
+                <div><i class="fa-solid fa-dollar-sign text-[#714B67] mr-1.5"></i>Cost: <strong>${{ plan.cost }} / period</strong></div>
+                {% if plan.allow_pause %}<div><i class="fa-solid fa-pause text-blue-500 mr-1.5"></i>Pause allowed</div>{% endif %}
+                {% if plan.allow_renewal %}<div><i class="fa-solid fa-rotate text-emerald-500 mr-1.5"></i>Renewable</div>{% endif %}
+            </div>
+        </div>
+
+        <div class="flex justify-between">
+            <a href="{% url 'onboarding_step1' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl font-bold text-sm transition flex items-center space-x-2">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span>Back</span>
+            </a>
+            <button type="submit" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-8 py-2.5 rounded-xl font-bold text-sm shadow-sm transition flex items-center space-x-2">
+                <span>Review & Confirm</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}
+

@@ -19,12 +19,32 @@
             </p>
         </div>
 
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center flex-wrap gap-2">
             <!-- Benchmark Badge proving sub-2-second requirement -->
             <div class="flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3.5 py-1.5 rounded-xl text-xs font-semibold">
                 <i class="fa-solid fa-bolt text-emerald-500"></i>
                 <span>Query Time: <strong>{{ overview.query_latency_ms }} ms</strong></span>
                 <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded uppercase font-bold">&lt; 2s SLA</span>
+            </div>
+
+            <!-- Enhancement J: CSV Export Dropdown -->
+            <div class="relative group">
+                <button type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5 border border-slate-200">
+                    <i class="fa-solid fa-file-csv text-teal-600"></i>
+                    <span>Export</span>
+                    <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                </button>
+                <div class="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-1 hidden group-hover:block z-40">
+                    <a href="{% url 'export_invoices_csv' %}" class="flex items-center space-x-2 px-4 py-2.5 text-xs hover:bg-slate-50 text-slate-700 transition">
+                        <i class="fa-solid fa-receipt text-[#714B67]"></i><span>Invoices CSV</span>
+                    </a>
+                    <a href="{% url 'export_subscriptions_csv' %}" class="flex items-center space-x-2 px-4 py-2.5 text-xs hover:bg-slate-50 text-slate-700 transition">
+                        <i class="fa-solid fa-file-contract text-[#714B67]"></i><span>Subscriptions CSV</span>
+                    </a>
+                    <a href="{% url 'export_payments_csv' %}" class="flex items-center space-x-2 px-4 py-2.5 text-xs hover:bg-slate-50 text-slate-700 transition">
+                        <i class="fa-solid fa-credit-card text-[#714B67]"></i><span>Payments CSV</span>
+                    </a>
+                </div>
             </div>
 
             <a href="{% url 'run_billing_day' %}" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5">
@@ -149,6 +169,47 @@
 
     </div>
 
+    <!-- Enhancement A: Interactive Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Revenue vs Invoiced Chart (6 months bar chart) -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-chart-bar text-[#714B67]"></i>
+                    <span>Revenue vs Invoiced — Last 6 Months</span>
+                </h3>
+                <span class="text-[11px] text-slate-400">Chart.js live data</span>
+            </div>
+            <canvas id="revenueChart" height="140"></canvas>
+        </div>
+
+        <!-- Subscription Status Donut -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-2 mb-4">
+                <i class="fa-solid fa-chart-pie text-[#017E84]"></i>
+                <span>Subscription Status</span>
+            </h3>
+            <canvas id="statusDonut" height="180"></canvas>
+            <div id="statusLegend" class="mt-3 text-xs space-y-1"></div>
+        </div>
+
+    </div>
+
+    <!-- Overdue Aging Bar Chart -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                <i class="fa-solid fa-chart-simple text-rose-500"></i>
+                <span>Overdue Aging Buckets</span>
+            </h3>
+            <a href="{% url 'dunning_dashboard' %}" class="text-xs text-rose-600 hover:underline font-semibold">
+                <i class="fa-solid fa-bell mr-1"></i>Dunning Campaign &rarr;
+            </a>
+        </div>
+        <canvas id="agingChart" height="80"></canvas>
+    </div>
+
     <!-- Scene 6 & 7: Overdue Invoices Immediate Chase Table -->
     <div id="overdue-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
         <div class="p-5 border-b border-slate-100 flex items-center justify-between">
@@ -227,7 +288,7 @@
     <!-- Charts & Breakdown Grids -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <!-- Plan Breakdown -->
+        <!-- Plan Breakdown with Customer Statement links (Enhancement K) -->
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
             <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center space-x-2">
                 <i class="fa-solid fa-layer-group text-[#714B67]"></i>
@@ -252,12 +313,14 @@
             </div>
         </div>
 
-        <!-- Payment Methods Breakdown -->
+        <!-- Payment Methods Breakdown + Customer Statements -->
         <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
-            <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center space-x-2">
-                <i class="fa-solid fa-credit-card text-[#714B67]"></i>
-                <span>Collected Revenue by Payment Channel</span>
-            </h3>
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                    <i class="fa-solid fa-credit-card text-[#714B67]"></i>
+                    <span>Collected Revenue by Payment Channel</span>
+                </h3>
+            </div>
             <div class="space-y-3">
                 {% for pm in overview.payment_methods %}
                 <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
@@ -274,10 +337,163 @@
                 <p class="text-xs text-slate-400">No payment data recorded yet.</p>
                 {% endfor %}
             </div>
+
+            <!-- Enhancement K: Customer Statement Links -->
+            <div class="mt-5 pt-4 border-t border-slate-100">
+                <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-file-pdf text-[#714B67] mr-1"></i> Customer Statements
+                </h4>
+                <div class="space-y-1.5">
+                    {% for c in customers %}
+                    <a href="{% url 'customer_statement_pdf' c.id %}" target="_blank"
+                        class="flex items-center justify-between p-2 rounded-lg hover:bg-purple-50 hover:border-purple-200 border border-transparent transition text-xs group">
+                        <span class="font-medium text-slate-700 group-hover:text-[#714B67]">{{ c.display_name }}</span>
+                        <span class="text-[11px] text-slate-400 group-hover:text-[#714B67]">
+                            <i class="fa-solid fa-download mr-1"></i>PDF
+                        </span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
 
     </div>
 
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Enhancement A: Load chart data from JSON API and render Chart.js charts
+async function loadCharts() {
+    let data;
+    try {
+        const resp = await fetch('{% url "chart_data_api" %}');
+        data = await resp.json();
+    } catch (e) {
+        console.error('Chart data fetch failed:', e);
+        return;
+    }
+
+    const brandPurple = '#714B67';
+    const brandTeal = '#017E84';
+    const rose = '#F43F5E';
+
+    // 1. Revenue vs Invoiced Bar Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revenueCtx, {
+        type: 'bar',
+        data: {
+            labels: data.months,
+            datasets: [
+                {
+                    label: 'Revenue Collected ($)',
+                    data: data.revenue_collected,
+                    backgroundColor: brandTeal + 'CC',
+                    borderColor: brandTeal,
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                },
+                {
+                    label: 'Invoices Generated ($)',
+                    data: data.invoices_generated,
+                    backgroundColor: brandPurple + 'AA',
+                    borderColor: brandPurple,
+                    borderWidth: 1.5,
+                    borderRadius: 6,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 11 }, padding: 12 } },
+                tooltip: { mode: 'index', intersect: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        font: { size: 10 },
+                        callback: v => '$' + v.toLocaleString()
+                    },
+                    grid: { color: '#F1F5F9' }
+                },
+                x: { ticks: { font: { size: 10 } }, grid: { display: false } }
+            }
+        }
+    });
+
+    // 2. Subscription Status Donut
+    const statusCtx = document.getElementById('statusDonut').getContext('2d');
+    const statusColors = {
+        active: '#059669', draft: '#94A3B8', quotation: brandPurple,
+        confirmed: '#2563EB', paused: '#D97706', closed: '#64748B'
+    };
+    const statusLabels = Object.keys(data.subscription_status);
+    const statusValues = Object.values(data.subscription_status);
+    const statusBgColors = statusLabels.map(k => statusColors[k] || '#6B7280');
+
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
+            datasets: [{ data: statusValues, backgroundColor: statusBgColors, borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} subscription(s)` } }
+            }
+        }
+    });
+
+    // Render custom legend
+    const legend = document.getElementById('statusLegend');
+    statusLabels.forEach((label, i) => {
+        legend.innerHTML += `<div class="flex items-center space-x-2">
+            <span class="w-3 h-3 rounded-full shrink-0" style="background:${statusBgColors[i]}"></span>
+            <span class="capitalize text-slate-600">${label}: <strong>${statusValues[i]}</strong></span>
+        </div>`;
+    });
+
+    // 3. Overdue Aging Horizontal Bar Chart
+    const agingCtx = document.getElementById('agingChart').getContext('2d');
+    new Chart(agingCtx, {
+        type: 'bar',
+        data: {
+            labels: data.aging.labels,
+            datasets: [{
+                label: 'Outstanding Balance ($)',
+                data: data.aging.values,
+                backgroundColor: ['#FCA5A5', '#F87171', rose],
+                borderColor: ['#EF4444', '#DC2626', '#BE123C'],
+                borderWidth: 1.5,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ' $' + ctx.raw.toLocaleString() + ' outstanding' } }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: { font: { size: 10 }, callback: v => '$' + v.toLocaleString() },
+                    grid: { color: '#FEF2F2' }
+                },
+                y: { ticks: { font: { size: 11, weight: '600' } }, grid: { display: false } }
+            }
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', loadCharts);
+</script>
 {% endblock %}
 

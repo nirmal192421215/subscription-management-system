@@ -1,3 +1,4 @@
+
 import uuid
 from decimal import Decimal
 from django.db import models
@@ -572,3 +573,63 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment ${self.amount} for {self.invoice.invoice_number} via {self.get_payment_method_display()}"
+
+
+# -------------------------------------------------------------------------
+# Enhancement H: Admin Audit Log
+# -------------------------------------------------------------------------
+
+class AuditLog(models.Model):
+    """Timestamped log of all significant system events."""
+    class EventType(models.TextChoices):
+        LOGIN = 'login', 'User Login'
+        LOGOUT = 'logout', 'User Logout'
+        STATUS_CHANGE = 'status_change', 'Status Change'
+        PAYMENT = 'payment', 'Payment Recorded'
+        INVOICE_SENT = 'invoice_sent', 'Invoice Sent'
+        SUBSCRIPTION_CREATED = 'sub_created', 'Subscription Created'
+        SUBSCRIPTION_CLOSED = 'sub_closed', 'Subscription Closed'
+        BILLING_DAY = 'billing_day', 'Billing Day Run'
+        DUNNING = 'dunning', 'Dunning Email Sent'
+        EXPORT = 'export', 'Data Export'
+        OTHER = 'other', 'Other'
+
+    event_type = models.CharField(max_length=30, choices=EventType.choices, default=EventType.OTHER, db_index=True)
+    actor = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='audit_logs')
+    target_model = models.CharField(max_length=50, blank=True, help_text="Model name e.g. Invoice, Subscription")
+    target_id = models.PositiveIntegerField(null=True, blank=True, help_text="PK of the affected object")
+    description = models.TextField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        actor_str = self.actor.email if self.actor else 'System'
+        return f"[{self.get_event_type_display()}] {actor_str}: {self.description[:60]}"
+
+
+# -------------------------------------------------------------------------
+# Enhancement I: Dunning Campaign Log
+# -------------------------------------------------------------------------
+
+class DunningLog(models.Model):
+    """Tracks automated overdue follow-up emails per invoice."""
+    class Level(models.TextChoices):
+        DAY1 = 'day1', 'Day 1 Reminder'
+        DAY7 = 'day7', 'Day 7 Follow-up'
+        DAY14 = 'day14', 'Day 14 Final Notice'
+
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name='dunning_logs')
+    level = models.CharField(max_length=10, choices=Level.choices)
+    sent_at = models.DateTimeField(auto_now_add=True)
+    sent_to = models.EmailField()
+    success = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-sent_at']
+
+    def __str__(self):
+        return f"Dunning {self.level} for {self.invoice.invoice_number} -> {self.sent_to}"

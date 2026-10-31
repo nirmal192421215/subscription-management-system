@@ -1,7 +1,8 @@
 from django.urls import path
 from brightloop_app.views import (
     auth_views, portal_views, staff_views,
-    catalog_views, subscription_views, billing_views, finance_views
+    catalog_views, subscription_views, billing_views, finance_views,
+    enhancement_views,
 )
 
 urlpatterns = [
@@ -76,5 +77,30 @@ urlpatterns = [
     path('discounts/', billing_views.discount_list_view, name='discount_list'),
     path('discounts/new/', billing_views.discount_create_view, name='discount_create'),
     path('discounts/<int:discount_id>/toggle/', billing_views.discount_toggle_view, name='discount_toggle'),
+
+    # ── Enhancements ───────────────────────────────────────────────────────────
+
+    # Enhancement A: Chart Data API (Chart.js JSON endpoint)
+    path('api/chart-data/', enhancement_views.chart_data_api, name='chart_data_api'),
+
+    # Enhancement F: Customer Onboarding Wizard
+    path('onboarding/', enhancement_views.onboarding_step1_view, name='onboarding_step1'),
+    path('onboarding/step2/', enhancement_views.onboarding_step2_view, name='onboarding_step2'),
+    path('onboarding/step3/', enhancement_views.onboarding_step3_view, name='onboarding_step3'),
+
+    # Enhancement H: Admin Audit Log
+    path('audit-log/', enhancement_views.audit_log_view, name='audit_log'),
+
+    # Enhancement I: Dunning Campaign
+    path('dunning/', enhancement_views.dunning_dashboard_view, name='dunning_dashboard'),
+    path('dunning/<int:invoice_id>/send/<str:level>/', enhancement_views.dunning_send_view, name='dunning_send'),
+
+    # Enhancement J: CSV Exports
+    path('export/invoices.csv', enhancement_views.export_invoices_csv, name='export_invoices_csv'),
+    path('export/subscriptions.csv', enhancement_views.export_subscriptions_csv, name='export_subscriptions_csv'),
+    path('export/payments.csv', enhancement_views.export_payments_csv, name='export_payments_csv'),
+
+    # Enhancement K: Customer Statement PDF
+    path('customers/<int:customer_id>/statement.pdf', enhancement_views.customer_statement_pdf, name='customer_statement_pdf'),
 ]
 

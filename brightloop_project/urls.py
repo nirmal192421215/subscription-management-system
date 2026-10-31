@@ -16,8 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from brightloop_app.views import enhancement_views
 
 urlpatterns = [
+    path('admin/audit-log/', enhancement_views.audit_log_view, name='admin_audit_log_override'),
     path('admin/', admin.site.urls),
     path('', include('brightloop_app.urls')),
 ]

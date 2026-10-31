@@ -1,0 +1,110 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Dunning Campaign - Brightloop{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-rose-100 text-rose-600">
+                    <i class="fa-solid fa-bell-concierge text-lg"></i>
+                </span>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Dunning Campaign</h1>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Automated overdue follow-up emails — Day 1 reminder, Day 7 follow-up, Day 14 final notice
+            </p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <span class="text-xs bg-rose-100 text-rose-800 px-3 py-1.5 rounded-full font-bold">
+                {{ dunning_data|length }} overdue invoice{{ dunning_data|length|pluralize }}
+            </span>
+        </div>
+    </div>
+
+    {% if dunning_data %}
+    <!-- Dunning Cards -->
+    <div class="space-y-4">
+        {% for item in dunning_data %}
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100">
+                <!-- Invoice Info -->
+                <div class="flex items-start space-x-4">
+                    <div class="p-3 bg-rose-50 rounded-xl">
+                        <i class="fa-solid fa-file-invoice-dollar text-rose-500 text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <a href="{% url 'invoice_detail' item.invoice.id %}" class="font-black text-[#714B67] hover:underline font-mono">
+                                {{ item.invoice.invoice_number }}
+                            </a>
+                            <span class="bg-rose-100 text-rose-800 text-[11px] font-bold px-2 py-0.5 rounded-full">
+                                {{ item.overdue_days }} days overdue
+                            </span>
+                        </div>
+                        <div class="text-xs text-slate-600 mt-0.5 font-semibold">{{ item.invoice.customer.display_name }}</div>
+                        <div class="text-[11px] text-slate-400">{{ item.invoice.customer.email }} &bull; Due: {{ item.invoice.due_date }}</div>
+                    </div>
+                </div>
+                <!-- Balance -->
+                <div class="text-right">
+                    <div class="text-2xl font-black text-rose-600 font-mono">${{ item.invoice.balance_due|floatformat:2 }}</div>
+                    <div class="text-[11px] text-slate-400">outstanding balance</div>
+                </div>
+            </div>
+
+            <!-- Dunning Level Actions -->
+            <div class="p-5 bg-slate-50 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {% for level_val, level_label in item.invoice.dunning_logs.model.Level.choices %}
+                <div class="flex items-center justify-between p-3 rounded-xl border bg-white
+                    {% if level_val in item.sent_levels %}border-emerald-200{% elif level_val in item.suggested %}border-rose-200{% else %}border-slate-200{% endif %}">
+                    <div>
+                        <div class="text-xs font-bold text-slate-900">{{ level_label }}</div>
+                        {% if level_val in item.sent_levels %}
+                        <div class="text-[11px] text-emerald-600 flex items-center space-x-1">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>
+                                Sent
+                                {% for dlog in item.invoice.dunning_logs.all %}{% if dlog.level == level_val %}{{ dlog.sent_at|date:"M d" }}{% endif %}{% endfor %}
+                            </span>
+                        </div>
+                        {% elif level_val in item.suggested %}
+                        <div class="text-[11px] text-rose-600 font-semibold">Action required</div>
+                        {% else %}
+                        <div class="text-[11px] text-slate-400">Not yet due</div>
+                        {% endif %}
+                    </div>
+                    {% if level_val not in item.sent_levels and level_val in item.suggested %}
+                    <a href="{% url 'dunning_send' item.invoice.id level_val %}"
+                        class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition"
+                        onclick="return confirm('Send {{ level_label }} to {{ item.invoice.customer.email }}?')">
+                        <i class="fa-solid fa-paper-plane mr-1"></i> Send
+                    </a>
+                    {% elif level_val in item.sent_levels %}
+                    <span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded-lg text-xs font-bold">
+                        <i class="fa-solid fa-check"></i> Sent
+                    </span>
+                    {% else %}
+                    <span class="text-slate-300 text-xs font-medium">Pending</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="bg-white rounded-2xl p-16 text-center shadow-sm border border-slate-200">
+        <i class="fa-solid fa-circle-check text-5xl text-emerald-400 mb-4"></i>
+        <p class="text-xl font-bold text-slate-900">No overdue invoices!</p>
+        <p class="text-sm text-slate-500 mt-2">All accounts are up to date. Nothing to chase today.</p>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
+

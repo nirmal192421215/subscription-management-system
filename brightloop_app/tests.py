@@ -360,3 +360,103 @@ class Scene7FinanceAnalyticsAndPerformanceTest(TestCase):
         # Requirement: "every page should still respond in under two seconds."
         # Verify query latency is well under 2000 ms (2 seconds):
         self.assertLess(overview['query_latency_ms'], 2000.0, "Analytics latency exceeded 2000 ms SLA!")
+
+
+class EnhancementsVerificationTest(TestCase):
+    """
+    Test suite verifying the enhancements:
+    - Audit log page availability & access
+    - Customer onboarding wizard 3-step completion
+    - CSV data exports
+    - Customer statement PDF generation
+    - Dunning overdue campaign
+    """
+    def setUp(self):
+        self.client = Client()
+        self.admin = User.objects.create_superuser(
+            email='admin@brightloop.test',
+            password='Admin@12345Password'
+        )
+        self.customer = User.objects.create_user(
+            email='customer@example.test',
+            password='Cust@12345Password',
+            role=User.Role.CUSTOMER,
+            first_name='John',
+            last_name='Doe',
+            company_name='Acme Corp'
+        )
+        self.plan = Plan.objects.create(
+            name='Test Cloud Plan',
+            code='test-cloud-plan',
+            cost=Decimal('99.00'),
+            billing_interval=Plan.BillingInterval.MONTHLY
+        )
+        self.product = Product.objects.create(
+            name='Cloud SaaS Core',
+            sales_price=Decimal('99.00')
+        )
+
+    def test_audit_log_pages(self):
+        self.client.force_login(self.admin)
+        # Test /audit-log/
+        r1 = self.client.get('/audit-log/')
+        self.assertEqual(r1.status_code, 200)
+
+        # Test /admin/audit-log/
+        r2 = self.client.get('/admin/audit-log/')
+        self.assertEqual(r2.status_code, 200)
+
+    def test_onboarding_wizard_full_flow(self):
+        self.client.force_login(self.customer)
+
+        # Step 1: Choose plan
+        r1 = self.client.get('/onboarding/')
+        self.assertEqual(r1.status_code, 200)
+        p1 = self.client.post('/onboarding/', {'plan_id': self.plan.id})
+        self.assertEqual(p1.status_code, 302)
+
+        # Step 2: Configure seats
+        r2 = self.client.get('/onboarding/step2/')
+        self.assertEqual(r2.status_code, 200)
+        p2 = self.client.post('/onboarding/step2/', {
+            'quantity': 3,
+            'start_date': str(timezone.now().date()),
+            'notes': 'Production trial'
+        })
+        self.assertEqual(p2.status_code, 302)
+
+        # Step 3: Confirm page rendering (checks next_billing_date syntax)
+        r3 = self.client.get('/onboarding/step3/')
+        self.assertEqual(r3.status_code, 200)
+        self.assertContains(r3, 'Confirm & Activate')
+        self.assertContains(r3, 'Test Cloud Plan')
+
+        # Activate subscription
+        p3 = self.client.post('/onboarding/step3/', {'confirm': '1'})
+        self.assertEqual(p3.status_code, 302)
+
+        # Verify subscription was created
+        created_sub = Subscription.objects.filter(customer=self.customer).first()
+        self.assertIsNotNone(created_sub)
+        self.assertEqual(created_sub.plan, self.plan)
+        self.assertEqual(created_sub.status, Subscription.Status.ACTIVE)
+
+    def test_csv_exports(self):
+        self.client.force_login(self.admin)
+        for url in ['/export/invoices.csv', '/export/subscriptions.csv', '/export/payments.csv']:
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200)
+            self.assertEqual(resp['Content-Type'], 'text/csv')
+
+    def test_statement_pdf_generation(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get(f'/customers/{self.customer.id}/statement.pdf')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp['Content-Type'], 'application/pdf')
+
+    def test_dunning_dashboard(self):
+        self.client.force_login(self.admin)
+        resp = self.client.get('/dunning/')
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, 'Dunning Campaign')
+

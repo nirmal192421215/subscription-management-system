@@ -182,6 +182,127 @@ class PDFService:
         buffer.seek(0)
         return buffer.getvalue()
 
+    @staticmethod
+    def generate_customer_statement(customer, invoices, payments, total_invoiced, total_paid, total_outstanding, generated_on):
+        """Enhancement K: Full account statement PDF for a customer."""
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=letter,
+            rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36
+        )
+
+        styles = getSampleStyleSheet()
+        normal = styles['Normal']
+
+        sub_header = ParagraphStyle('SubHeader', parent=normal, fontSize=10, leading=14, textColor=colors.HexColor('#6B7280'))
+        table_header = ParagraphStyle('TableHeader', parent=normal, fontSize=8, leading=10, textColor=colors.white, fontName='Helvetica-Bold')
+        cell_text = ParagraphStyle('CellText', parent=normal, fontSize=8, leading=11, textColor=colors.HexColor('#1F2937'))
+        cell_bold = ParagraphStyle('CellBold', parent=normal, fontSize=8, leading=11, textColor=colors.HexColor('#1F2937'), fontName='Helvetica-Bold')
+
+        elements = []
+
+        # Header
+        hdr = Table([
+            [
+                Paragraph('<b>Brightloop Software Inc.</b><br/>100 Innovation Way<br/>Silicon Valley, CA 94025<br/>billing@brightloop.com', sub_header),
+                Paragraph(f'<b>ACCOUNT STATEMENT</b><br/><font size=11 color="#714B67"><b>{customer.display_name}</b></font><br/>{customer.email}<br/>Generated: {generated_on}', ParagraphStyle('StmtTitle', parent=normal, alignment=2, leading=16))
+            ]
+        ], colWidths=[4.0 * inch, 3.5 * inch])
+        elements.append(hdr)
+        elements.append(Spacer(1, 10))
+
+        # Summary KPIs
+        kpi_data = [
+            [
+                Paragraph(f'<b>Total Invoiced</b><br/><font size=14 color="#1F2937">${total_invoiced:,.2f}</font>', ParagraphStyle('KPI', parent=normal, alignment=1)),
+                Paragraph(f'<b>Total Paid</b><br/><font size=14 color="#059669">${total_paid:,.2f}</font>', ParagraphStyle('KPI', parent=normal, alignment=1)),
+                Paragraph(f'<b>Outstanding Balance</b><br/><font size=14 color="#DC2626">${total_outstanding:,.2f}</font>', ParagraphStyle('KPI', parent=normal, alignment=1)),
+            ]
+        ]
+        kpi_tbl = Table(kpi_data, colWidths=[2.5 * inch, 2.5 * inch, 2.5 * inch])
+        kpi_tbl.setStyle(TableStyle([
+            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F9FAFB')),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ]))
+        elements.append(kpi_tbl)
+        elements.append(Spacer(1, 15))
+
+        # Invoice history table
+        elements.append(Paragraph('<b>Invoice History</b>', ParagraphStyle('SectionHdr', parent=normal, fontSize=11, fontName='Helvetica-Bold', textColor=colors.HexColor('#714B67'))))
+        elements.append(Spacer(1, 6))
+
+        inv_rows = [[
+            Paragraph('Invoice #', table_header),
+            Paragraph('Date', table_header),
+            Paragraph('Due Date', table_header),
+            Paragraph('Status', table_header),
+            Paragraph('Total', table_header),
+            Paragraph('Balance Due', table_header),
+        ]]
+        for inv in invoices:
+            bal_color = '#DC2626' if inv.balance_due > 0 and inv.status != 'paid' else '#1F2937'
+            inv_rows.append([
+                Paragraph(inv.invoice_number, cell_bold),
+                Paragraph(str(inv.invoice_date), cell_text),
+                Paragraph(str(inv.due_date), cell_text),
+                Paragraph(inv.get_status_display().upper(), cell_text),
+                Paragraph(f'${inv.total_amount:,.2f}', cell_text),
+                Paragraph(f'<font color="{bal_color}">${inv.balance_due:,.2f}</font>', cell_bold),
+            ])
+
+        inv_tbl = Table(inv_rows, colWidths=[1.4*inch, 1.0*inch, 1.0*inch, 1.0*inch, 1.5*inch, 1.5*inch])
+        inv_tbl.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#714B67')),
+            ('ALIGN', (4, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elements.append(inv_tbl)
+        elements.append(Spacer(1, 15))
+
+        # Payment history table
+        elements.append(Paragraph('<b>Payment History</b>', ParagraphStyle('SectionHdr2', parent=normal, fontSize=11, fontName='Helvetica-Bold', textColor=colors.HexColor('#017E84'))))
+        elements.append(Spacer(1, 6))
+
+        pay_rows = [[
+            Paragraph('Date', table_header),
+            Paragraph('Invoice #', table_header),
+            Paragraph('Method', table_header),
+            Paragraph('Reference', table_header),
+            Paragraph('Amount', table_header),
+        ]]
+        for p in payments:
+            pay_rows.append([
+                Paragraph(str(p.payment_date), cell_text),
+                Paragraph(p.invoice.invoice_number, cell_bold),
+                Paragraph(p.get_payment_method_display(), cell_text),
+                Paragraph(p.transaction_reference or '—', cell_text),
+                Paragraph(f'${p.amount:,.2f}', cell_bold),
+            ])
+
+        pay_tbl = Table(pay_rows, colWidths=[1.2*inch, 1.5*inch, 1.5*inch, 1.8*inch, 1.5*inch])
+        pay_tbl.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#017E84')),
+            ('ALIGN', (4, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F0FAFA')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elements.append(pay_tbl)
+
+        elements.append(Spacer(1, 20))
+        elements.append(Paragraph('Thank you for your business. For questions, contact billing@brightloop.com', sub_header))
+
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer.getvalue()
+
 
     @staticmethod
     def generate_quote_pdf(subscription):
@@ -312,6 +433,127 @@ class PDFService:
         ]
         totals_table = Table(totals_data, colWidths=[2.0 * inch, 1.5 * inch])
         elements.append(Table([[Paragraph("This quotation is subject to Brightloop Software terms of service.", sub_header), totals_table]], colWidths=[4.0 * inch, 3.5 * inch]))
+
+        doc.build(elements)
+        buffer.seek(0)
+        return buffer.getvalue()
+
+    @staticmethod
+    def generate_customer_statement(customer, invoices, payments, total_invoiced, total_paid, total_outstanding, generated_on):
+        """Enhancement K: Full account statement PDF for a customer."""
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer, pagesize=letter,
+            rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36
+        )
+
+        styles = getSampleStyleSheet()
+        normal = styles['Normal']
+
+        sub_header = ParagraphStyle('SubHeader', parent=normal, fontSize=10, leading=14, textColor=colors.HexColor('#6B7280'))
+        table_header = ParagraphStyle('TableHeader', parent=normal, fontSize=8, leading=10, textColor=colors.white, fontName='Helvetica-Bold')
+        cell_text = ParagraphStyle('CellText', parent=normal, fontSize=8, leading=11, textColor=colors.HexColor('#1F2937'))
+        cell_bold = ParagraphStyle('CellBold', parent=normal, fontSize=8, leading=11, textColor=colors.HexColor('#1F2937'), fontName='Helvetica-Bold')
+
+        elements = []
+
+        # Header
+        hdr = Table([
+            [
+                Paragraph('<b>Brightloop Software Inc.</b><br/>100 Innovation Way<br/>Silicon Valley, CA 94025<br/>billing@brightloop.com', sub_header),
+                Paragraph(f'<b>ACCOUNT STATEMENT</b><br/><font size=11 color="#714B67"><b>{customer.display_name}</b></font><br/>{customer.email}<br/>Generated: {generated_on}', ParagraphStyle('StmtTitle', parent=normal, alignment=2, leading=16))
+            ]
+        ], colWidths=[4.0 * inch, 3.5 * inch])
+        elements.append(hdr)
+        elements.append(Spacer(1, 10))
+
+        # Summary KPIs
+        kpi_data = [
+            [
+                Paragraph(f'<b>Total Invoiced</b><br/><font size=14 color="#1F2937">${total_invoiced:,.2f}</font>', ParagraphStyle('KPI', parent=normal, alignment=1)),
+                Paragraph(f'<b>Total Paid</b><br/><font size=14 color="#059669">${total_paid:,.2f}</font>', ParagraphStyle('KPI', parent=normal, alignment=1)),
+                Paragraph(f'<b>Outstanding Balance</b><br/><font size=14 color="#DC2626">${total_outstanding:,.2f}</font>', ParagraphStyle('KPI', parent=normal, alignment=1)),
+            ]
+        ]
+        kpi_tbl = Table(kpi_data, colWidths=[2.5 * inch, 2.5 * inch, 2.5 * inch])
+        kpi_tbl.setStyle(TableStyle([
+            ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#F9FAFB')),
+            ('TOPPADDING', (0, 0), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
+        ]))
+        elements.append(kpi_tbl)
+        elements.append(Spacer(1, 15))
+
+        # Invoice history table
+        elements.append(Paragraph('<b>Invoice History</b>', ParagraphStyle('SectionHdr', parent=normal, fontSize=11, fontName='Helvetica-Bold', textColor=colors.HexColor('#714B67'))))
+        elements.append(Spacer(1, 6))
+
+        inv_rows = [[
+            Paragraph('Invoice #', table_header),
+            Paragraph('Date', table_header),
+            Paragraph('Due Date', table_header),
+            Paragraph('Status', table_header),
+            Paragraph('Total', table_header),
+            Paragraph('Balance Due', table_header),
+        ]]
+        for inv in invoices:
+            bal_color = '#DC2626' if inv.balance_due > 0 and inv.status != 'paid' else '#1F2937'
+            inv_rows.append([
+                Paragraph(inv.invoice_number, cell_bold),
+                Paragraph(str(inv.invoice_date), cell_text),
+                Paragraph(str(inv.due_date), cell_text),
+                Paragraph(inv.get_status_display().upper(), cell_text),
+                Paragraph(f'${inv.total_amount:,.2f}', cell_text),
+                Paragraph(f'<font color="{bal_color}">${inv.balance_due:,.2f}</font>', cell_bold),
+            ])
+
+        inv_tbl = Table(inv_rows, colWidths=[1.4*inch, 1.0*inch, 1.0*inch, 1.0*inch, 1.5*inch, 1.5*inch])
+        inv_tbl.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#714B67')),
+            ('ALIGN', (4, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F9FAFB')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elements.append(inv_tbl)
+        elements.append(Spacer(1, 15))
+
+        # Payment history table
+        elements.append(Paragraph('<b>Payment History</b>', ParagraphStyle('SectionHdr2', parent=normal, fontSize=11, fontName='Helvetica-Bold', textColor=colors.HexColor('#017E84'))))
+        elements.append(Spacer(1, 6))
+
+        pay_rows = [[
+            Paragraph('Date', table_header),
+            Paragraph('Invoice #', table_header),
+            Paragraph('Method', table_header),
+            Paragraph('Reference', table_header),
+            Paragraph('Amount', table_header),
+        ]]
+        for p in payments:
+            pay_rows.append([
+                Paragraph(str(p.payment_date), cell_text),
+                Paragraph(p.invoice.invoice_number, cell_bold),
+                Paragraph(p.get_payment_method_display(), cell_text),
+                Paragraph(p.transaction_reference or '—', cell_text),
+                Paragraph(f'${p.amount:,.2f}', cell_bold),
+            ])
+
+        pay_tbl = Table(pay_rows, colWidths=[1.2*inch, 1.5*inch, 1.5*inch, 1.8*inch, 1.5*inch])
+        pay_tbl.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#017E84')),
+            ('ALIGN', (4, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#E5E7EB')),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F0FAFA')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        elements.append(pay_tbl)
+
+        elements.append(Spacer(1, 20))
+        elements.append(Paragraph('Thank you for your business. For questions, contact billing@brightloop.com', sub_header))
 
         doc.build(elements)
         buffer.seek(0)

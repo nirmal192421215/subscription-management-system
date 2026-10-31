@@ -1,0 +1,106 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Get Started - Choose Your Plan | Brightloop{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+
+    <!-- Wizard Progress Header -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex items-center space-x-2 mb-5">
+            <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                <i class="fa-solid fa-rocket text-lg"></i>
+            </span>
+            <div>
+                <h1 class="text-2xl font-black text-slate-900">Get Started with Brightloop</h1>
+                <p class="text-xs text-slate-500">3 quick steps to activate your subscription</p>
+            </div>
+        </div>
+
+        <!-- Step Progress Bar -->
+        <div class="flex items-center space-x-2">
+            <div class="flex items-center space-x-2 flex-1">
+                <div class="w-8 h-8 rounded-full bg-[#714B67] text-white flex items-center justify-center text-sm font-bold shrink-0">1</div>
+                <div class="flex-1 h-1.5 rounded-full bg-[#714B67]"></div>
+            </div>
+            <div class="flex items-center space-x-2 flex-1">
+                <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold shrink-0">2</div>
+                <div class="flex-1 h-1.5 rounded-full bg-slate-200"></div>
+            </div>
+            <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold shrink-0">3</div>
+        </div>
+        <div class="flex justify-between mt-1 text-[11px] text-slate-400 font-medium">
+            <span class="text-[#714B67] font-bold">Choose Plan</span>
+            <span class="ml-[-20px]">Configure</span>
+            <span>Confirm</span>
+        </div>
+    </div>
+
+    <!-- Plan Selection -->
+    <form method="POST">
+        {% csrf_token %}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            {% for plan in plans %}
+            <label class="cursor-pointer group">
+                <input type="radio" name="plan_id" value="{{ plan.id }}" class="sr-only peer"
+                    {% if selected_plan_id == plan.id|stringformat:"s" %}checked{% endif %} required>
+                <div class="relative bg-white rounded-2xl p-5 border-2 border-slate-200 hover:border-[#714B67] peer-checked:border-[#714B67] peer-checked:bg-purple-50/40 transition shadow-sm h-full">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-black text-slate-900 text-base">{{ plan.name }}</h3>
+                            <p class="text-[11px] text-slate-500 mt-0.5">{{ plan.description|default:"Professional subscription plan" }}</p>
+                        </div>
+                        <div class="text-right shrink-0 ml-3">
+                            <div class="text-2xl font-black text-[#714B67]">${{ plan.cost }}</div>
+                            <div class="text-[11px] text-slate-400">/ {{ plan.get_billing_interval_display }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap gap-2 text-[11px]">
+                        {% if plan.allow_pause %}
+                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">
+                            <i class="fa-solid fa-pause text-[9px]"></i> Can Pause
+                        </span>
+                        {% endif %}
+                        {% if plan.allow_renewal %}
+                        <span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium">
+                            <i class="fa-solid fa-rotate text-[9px]"></i> Renewable
+                        </span>
+                        {% endif %}
+                        {% if plan.allow_close_early %}
+                        <span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium">
+                            <i class="fa-solid fa-xmark text-[9px]"></i> Flexible
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Check mark overlay -->
+                    <div class="absolute top-3 right-3 hidden peer-checked:block">
+                        <div class="w-5 h-5 bg-[#714B67] rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-check text-white text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+            </label>
+            {% empty %}
+            <div class="col-span-2 text-center text-slate-400 py-10">No plans available. Please contact support.</div>
+            {% endfor %}
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="text-sm text-rose-600 font-medium mb-3">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+
+        <div class="flex justify-end">
+            <button type="submit" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-8 py-3 rounded-xl font-bold text-sm shadow-sm transition flex items-center space-x-2">
+                <span>Continue</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </form>
+
+</div>
+{% endblock %}
+
