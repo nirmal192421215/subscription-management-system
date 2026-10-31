@@ -29,10 +29,10 @@ def login_view(request):
             messages.error(request, "Invalid email or password.")
 
     demo_accounts = [
-        {'role': 'Admin', 'email': 'admin@brightloop.com', 'pass': 'Admin@12345', 'desc': 'Full system control, staff management, discount rules'},
-        {'role': 'Internal Staff', 'email': 'sarah@brightloop.com', 'pass': 'Staff@12345', 'desc': 'Daily ops, quotes, invoicing, payments'},
-        {'role': 'Customer', 'email': 'acme@acmecorp.com', 'pass': 'Acme@12345', 'desc': 'Acme Corp portal (Active enterprise subscription)'},
-        {'role': 'Customer', 'email': 'bistro@cornercafe.com', 'pass': 'Corner@12345', 'desc': 'Corner Cafe portal (Monthly starter plan)'},
+        {'role': 'Administrator', 'email': 'admin@brightloop.com', 'pass': 'Brightloop#Admin2026!', 'desc': 'Full system control, staff management, discount rules'},
+        {'role': 'Finance / Staff', 'email': 'staff@brightloop.com', 'pass': 'Brightloop#Staff2026!', 'desc': 'Daily ops, quotes, invoicing, payments'},
+        {'role': 'Customer', 'email': 'acme@example.com', 'pass': 'Brightloop#Cust2026!', 'desc': 'Acme Corp portal (Active enterprise subscription)'},
+        {'role': 'Customer (Alt)', 'email': 'customer@brightloop.com', 'pass': 'Brightloop#Cust2026!', 'desc': 'Customer portal (Monthly starter plan)'},
     ]
 
     return render(request, 'brightloop/auth/login.html', {'demo_accounts': demo_accounts})

@@ -18,9 +18,9 @@ Evaluators and judges can log into the live deployment or use the built-in **Qui
 
 | Role | Email | Password | Persona & Key Access |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@brightloop.com` | `Brightloop#Admin2026!` | **Elena Vance**: Full audit logs, revenue metrics, staff directory, catalog & tax controls |
-| **Staff** | `staff@brightloop.com` | `Brightloop#Staff2026!` | **Sarah Jenkins**: Batch billing runs, dunning engine, quote-to-subscription, manual payments |
-| **Customer** | `customer@brightloop.com` | `Brightloop#Cust2026!` | **Arthur Pendleton (Acme)**: Self-service portal, view active subs, pay overdue invoices |
+| **Administrator** | `admin@brightloop.com` | `Brightloop#Admin2026!` | **Elena Vance (Admin)**: Full audit logs, revenue metrics, staff directory, catalog & tax controls |
+| **Finance / Staff** | `staff@brightloop.com` | `Brightloop#Staff2026!` | **Sarah Jenkins (Finance/Staff)**: Batch billing runs, dunning engine, quote-to-subscription, manual payments |
+| **Customer** | `acme@example.com` *(or `customer@brightloop.com`)* | `Brightloop#Cust2026!` | **Arthur Pendleton (Acme)**: Self-service portal, view active subs, pay overdue invoices |
 
 ---
 
@@ -58,8 +58,8 @@ A built-in **Quick Role Switcher** in the top navigation bar also allows judges 
 | Role | Email | Password | Persona & Privileges |
 | :--- | :--- | :--- | :--- |
 | **Administrator** | `admin@brightloop.com` | `Brightloop#Admin2026!` | **Elena Vance (CEO / Admin)**: Full administrative oversight, staff directory, audit logs, tax rules, and discount management. |
-| **Staff** | `staff@brightloop.com` | `Brightloop#Staff2026!` | **Sarah Jenkins (Internal Staff)**: Quotation templates, converting quotes to active subscriptions, PDF quote generation, and payment recording. |
-| **Customer** | `customer@brightloop.com` | `Brightloop#Cust2026!` | **Arthur Pendleton (Acme Corporation)**: Customer portal, self-service subscription lifecycle controls, online invoice payments. |
+| **Finance / Staff** | `staff@brightloop.com` | `Brightloop#Staff2026!` | **Sarah Jenkins (Finance / Staff)**: Quotation templates, converting quotes to active subscriptions, PDF quote generation, and payment recording. |
+| **Customer** | `acme@example.com` *(or `customer@brightloop.com`)* | `Brightloop#Cust2026!` | **Arthur Pendleton (Acme Corporation)**: Customer portal, self-service subscription lifecycle controls, online invoice payments. |
 
 ---
 
