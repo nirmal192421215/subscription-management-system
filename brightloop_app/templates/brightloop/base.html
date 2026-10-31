@@ -108,46 +108,48 @@
                     </a>
                     {% if is_admin %}
                     <!-- Admin Tools Dropdown (More) -->
-                    <div class="relative group">
-                        <button type="button"
-                            class="px-2.5 py-1.5 rounded-md hover:bg-white/10 transition flex items-center space-x-1">
+                    <div class="relative" id="more-menu-container">
+                        <button type="button" id="more-menu-btn"
+                            class="px-2.5 py-1.5 rounded-md hover:bg-white/10 active:bg-white/20 transition flex items-center space-x-1 cursor-pointer">
                             <i class="fa-solid fa-ellipsis text-xs text-teal-300"></i>
                             <span>More</span>
-                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="more-chevron"></i>
                         </button>
-                        <div
-                            class="absolute right-0 mt-1 w-56 bg-white text-slate-800 rounded-xl shadow-2xl py-2 hidden group-hover:block z-50 border border-slate-200">
-                            <a href="{% url 'discount_list' %}"
-                                class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-slate-50 transition">
-                                <i class="fa-solid fa-tags text-teal-600 w-4"></i><span>Discounts &amp; Promos</span>
-                            </a>
-                            <a href="{% url 'staff_list' %}"
-                                class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-slate-50 transition">
-                                <i class="fa-solid fa-users-gear text-teal-600 w-4"></i><span>Staff Directory</span>
-                            </a>
-                            <div class="border-t border-slate-100 my-1"></div>
-                            <a href="{% url 'dunning_dashboard' %}"
-                                class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-rose-50 text-rose-700 transition">
-                                <i class="fa-solid fa-bell-concierge text-rose-500 w-4"></i><span>Dunning Campaign</span>
-                            </a>
-                            <a href="{% url 'audit_log' %}"
-                                class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-purple-50 text-purple-700 transition">
-                                <i class="fa-solid fa-scroll text-[#714B67] w-4"></i><span>Admin Audit Log</span>
-                            </a>
-                            <div class="border-t border-slate-100 my-1"></div>
-                            <div class="px-4 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CSV Data Exports</div>
-                            <a href="{% url 'export_invoices_csv' %}"
-                                class="flex items-center space-x-2 px-4 py-1.5 text-xs hover:bg-slate-50 transition">
-                                <i class="fa-solid fa-file-csv text-teal-600 w-4"></i><span>Export Invoices</span>
-                            </a>
-                            <a href="{% url 'export_subscriptions_csv' %}"
-                                class="flex items-center space-x-2 px-4 py-1.5 text-xs hover:bg-slate-50 transition">
-                                <i class="fa-solid fa-file-csv text-teal-600 w-4"></i><span>Export Subscriptions</span>
-                            </a>
-                            <a href="{% url 'export_payments_csv' %}"
-                                class="flex items-center space-x-2 px-4 py-1.5 text-xs hover:bg-slate-50 transition">
-                                <i class="fa-solid fa-file-csv text-teal-600 w-4"></i><span>Export Payments</span>
-                            </a>
+                        <div id="more-menu"
+                            class="absolute right-0 top-full pt-1 w-56 hidden z-50">
+                            <div class="bg-white text-slate-800 rounded-xl shadow-2xl py-2 border border-slate-200">
+                                <a href="{% url 'discount_list' %}"
+                                    class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-tags text-teal-600 w-4"></i><span>Discounts &amp; Promos</span>
+                                </a>
+                                <a href="{% url 'staff_list' %}"
+                                    class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-users-gear text-teal-600 w-4"></i><span>Staff Directory</span>
+                                </a>
+                                <div class="border-t border-slate-100 my-1"></div>
+                                <a href="{% url 'dunning_dashboard' %}"
+                                    class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-rose-50 text-rose-700 transition">
+                                    <i class="fa-solid fa-bell-concierge text-rose-500 w-4"></i><span>Dunning Campaign</span>
+                                </a>
+                                <a href="{% url 'audit_log' %}"
+                                    class="flex items-center space-x-2 px-4 py-2 text-xs hover:bg-purple-50 text-purple-700 transition">
+                                    <i class="fa-solid fa-scroll text-[#714B67] w-4"></i><span>Admin Audit Log</span>
+                                </a>
+                                <div class="border-t border-slate-100 my-1"></div>
+                                <div class="px-4 py-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">CSV Data Exports</div>
+                                <a href="{% url 'export_invoices_csv' %}"
+                                    class="flex items-center space-x-2 px-4 py-1.5 text-xs hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-file-csv text-teal-600 w-4"></i><span>Export Invoices</span>
+                                </a>
+                                <a href="{% url 'export_subscriptions_csv' %}"
+                                    class="flex items-center space-x-2 px-4 py-1.5 text-xs hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-file-csv text-teal-600 w-4"></i><span>Export Subscriptions</span>
+                                </a>
+                                <a href="{% url 'export_payments_csv' %}"
+                                    class="flex items-center space-x-2 px-4 py-1.5 text-xs hover:bg-slate-50 transition">
+                                    <i class="fa-solid fa-file-csv text-teal-600 w-4"></i><span>Export Payments</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
@@ -173,44 +175,48 @@
                     {% if user.is_authenticated %}
                     <!-- Enhancement C: Mobile Hamburger Button -->
                     <button id="mobile-menu-btn" type="button"
-                        class="lg:hidden p-2 rounded-lg hover:bg-white/10 transition text-white"
+                        class="lg:hidden p-2 rounded-lg hover:bg-white/10 transition text-white cursor-pointer"
                         aria-label="Open navigation menu">
                         <i class="fa-solid fa-bars text-lg"></i>
                     </button>
 
                     <!-- Quick Role Switcher for Hackathon Evaluation -->
-                    <div class="relative group">
-                        <button type="button"
-                            class="flex items-center space-x-1.5 bg-white/15 hover:bg-white/25 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition border border-white/20 whitespace-nowrap">
+                    <div class="relative" id="role-switcher-container">
+                        <button type="button" id="role-switcher-btn"
+                            class="flex items-center space-x-1.5 bg-white/15 hover:bg-white/25 active:bg-white/30 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition border border-white/20 whitespace-nowrap cursor-pointer">
                             <i class="fa-solid fa-user-astronaut text-teal-300"></i>
                             <span class="hidden sm:inline">Role:</span>
                             <span class="font-bold underline decoration-teal-300">{{ user.get_role_display }}</span>
-                            <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="role-switcher-chevron"></i>
                         </button>
-                        <!-- Dropdown -->
-                        <div
-                            class="absolute right-0 mt-2 w-72 bg-white text-slate-800 rounded-xl shadow-2xl py-2 hidden group-hover:block z-50 border border-slate-200">
-                            <div class="px-4 py-2 border-b border-slate-100 bg-slate-50">
-                                <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Demo Accounts
-                                    Switcher</p>
-                                <p class="text-[11px] text-slate-400">Click to preview system from another persona</p>
-                            </div>
-                            <div class="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                                {% for du in demo_users %}
-                                <a href="{% url 'demo_switch_user' du.id %}"
-                                    class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 text-xs transition {% if du.id == user.id %}bg-purple-50 font-semibold{% endif %}">
+                        <!-- Dropdown with zero dead-zone gap -->
+                        <div id="role-switcher-menu"
+                            class="absolute right-0 top-full pt-1 w-72 hidden z-50">
+                            <div class="bg-white text-slate-800 rounded-xl shadow-2xl py-2 border border-slate-200 overflow-hidden">
+                                <div class="px-4 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
                                     <div>
-                                        <p class="font-medium text-slate-900">{{ du.display_name }}</p>
-                                        <p class="text-[11px] text-slate-500">{{ du.email }}</p>
+                                        <p class="text-xs font-semibold text-slate-700 uppercase tracking-wider">Demo Accounts</p>
+                                        <p class="text-[10px] text-slate-400">Click any persona to switch view</p>
                                     </div>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-bold
-                                            {% if du.role == 'admin' %}bg-purple-100 text-purple-700
-                                            {% elif du.role == 'staff' %}bg-blue-100 text-blue-700
-                                            {% else %}bg-emerald-100 text-emerald-700{% endif %}">
-                                        {{ du.get_role_display }}
-                                    </span>
-                                </a>
-                                {% endfor %}
+                                    <span class="text-[10px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded-full font-bold">1-Click</span>
+                                </div>
+                                <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                                    {% for du in demo_users %}
+                                    <a href="{% url 'demo_switch_user' du.id %}"
+                                        class="flex items-center justify-between px-4 py-2.5 hover:bg-purple-50 text-xs transition cursor-pointer {% if du.id == user.id %}bg-purple-100/60 font-semibold border-l-4 border-[#714B67]{% endif %}">
+                                        <div class="min-w-0 pr-2">
+                                            <p class="font-medium text-slate-900 truncate">{{ du.display_name }}</p>
+                                            <p class="text-[11px] text-slate-500 truncate">{{ du.email }}</p>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0
+                                                {% if du.role == 'admin' %}bg-purple-100 text-purple-700
+                                                {% elif du.role == 'staff' %}bg-blue-100 text-blue-700
+                                                {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                            {{ du.get_role_display }}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -319,7 +325,8 @@
         const mobileBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
         if (mobileBtn && mobileMenu) {
-            mobileBtn.addEventListener('click', () => {
+            mobileBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
                 mobileMenu.classList.toggle('hidden');
                 const icon = mobileBtn.querySelector('i');
                 icon.className = mobileMenu.classList.contains('hidden')
@@ -327,6 +334,80 @@
                     : 'fa-solid fa-xmark text-lg';
             });
         }
+
+        // Dropdown Click & Hover Management (Role Switcher & More Menu)
+        function setupDropdown(btnId, menuId, chevronId, containerId) {
+            const btn = document.getElementById(btnId);
+            const menu = document.getElementById(menuId);
+            const chevron = chevronId ? document.getElementById(chevronId) : null;
+            const container = containerId ? document.getElementById(containerId) : (btn ? btn.parentElement : null);
+            if (!btn || !menu) return;
+
+            let isMenuOpen = false;
+
+            function open() {
+                isMenuOpen = true;
+                menu.classList.remove('hidden');
+                if (chevron) chevron.style.transform = 'rotate(180deg)';
+            }
+
+            function close() {
+                isMenuOpen = false;
+                menu.classList.add('hidden');
+                if (chevron) chevron.style.transform = 'rotate(0deg)';
+            }
+
+            // Left Click on button toggles dropdown stably
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (isMenuOpen) {
+                    close();
+                } else {
+                    // Close other dropdowns
+                    closeAllDropdowns();
+                    open();
+                }
+            });
+
+            // Hover on container also opens smoothly (no gap)
+            if (container) {
+                container.addEventListener('mouseenter', () => open());
+                container.addEventListener('mouseleave', () => close());
+            }
+        }
+
+        function closeAllDropdowns() {
+            const roleMenu = document.getElementById('role-switcher-menu');
+            const moreMenu = document.getElementById('more-menu');
+            const rChevron = document.getElementById('role-switcher-chevron');
+            const mChevron = document.getElementById('more-chevron');
+
+            if (roleMenu) roleMenu.classList.add('hidden');
+            if (moreMenu) moreMenu.classList.add('hidden');
+            if (rChevron) rChevron.style.transform = 'rotate(0deg)';
+            if (mChevron) mChevron.style.transform = 'rotate(0deg)';
+        }
+
+        // Initialize both dropdowns
+        setupDropdown('role-switcher-btn', 'role-switcher-menu', 'role-switcher-chevron', 'role-switcher-container');
+        setupDropdown('more-menu-btn', 'more-menu', 'more-chevron', 'more-menu-container');
+
+        // Global dismiss on click outside
+        document.addEventListener('click', (e) => {
+            const roleContainer = document.getElementById('role-switcher-container');
+            const moreContainer = document.getElementById('more-menu-container');
+            if (roleContainer && !roleContainer.contains(e.target) && moreContainer && !moreContainer.contains(e.target)) {
+                closeAllDropdowns();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllDropdowns();
+            }
+        });
     </script>
 
     <!-- Notification Messages Banner -->
