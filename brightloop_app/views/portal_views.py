@@ -201,3 +201,4 @@ def portal_pay_invoice_view(request, invoice_id):
         return redirect('portal_invoice_detail', invoice_id=invoice.id)
 
     return render(request, 'brightloop/portal/pay_invoice.html', {'invoice': invoice})
+

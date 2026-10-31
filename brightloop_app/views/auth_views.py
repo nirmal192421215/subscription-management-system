@@ -159,3 +159,4 @@ def demo_switch_user_view(request, user_id):
     if target_user.is_customer_user:
         return redirect('portal_dashboard')
     return redirect('finance_dashboard')
+

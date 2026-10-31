@@ -60,3 +60,4 @@ def staff_create_view(request):
             return redirect('staff_list')
 
     return render(request, 'brightloop/staff/staff_form.html', {'errors': errors})
+

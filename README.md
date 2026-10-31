@@ -154,3 +154,4 @@ The application includes a built-in **Quick Role Switcher** in the top navigatio
   * `brightloop_app/services/analytics_service.py`: Financial KPIs, MRR/ARR, receivables, latency benchmark
   * `brightloop_app/services/pdf_service.py`: ReportLab document templates
   * `brightloop_app/validators.py`: Strict password security complexity validation
+

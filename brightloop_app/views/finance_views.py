@@ -45,3 +45,4 @@ def finance_dashboard_view(request):
         'selected_plan': plan_id,
         'selected_customer': customer_id,
     })
+

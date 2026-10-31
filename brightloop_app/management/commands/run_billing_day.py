@@ -27,3 +27,4 @@ class Command(BaseCommand):
 
         for msg in results['messages']:
             self.stdout.write(f" - {msg}")
+

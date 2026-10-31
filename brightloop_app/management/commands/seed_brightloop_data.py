@@ -479,3 +479,4 @@ class Command(BaseCommand):
         self.stdout.write("  - Customer: acme@acmecorp.com        (Password: Acme@12345)")
         self.stdout.write("  - Customer: bistro@cornercafe.com    (Password: Corner@12345)")
         self.stdout.write("  - Customer: spark@sparklabs.com      (Password: Spark@12345)")
+

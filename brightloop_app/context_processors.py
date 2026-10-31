@@ -24,3 +24,4 @@ def brightloop_context(request):
         'overdue_count': overdue_count,
         'demo_users': demo_users,
     }
+

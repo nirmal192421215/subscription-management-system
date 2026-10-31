@@ -203,3 +203,4 @@ def tax_rule_create_view(request):
         messages.success(request, f"Tax rule '{tax.name}' ({tax.rate}%) created!")
         return redirect('tax_rule_list')
     return render(request, 'brightloop/catalog/tax_form.html')
+

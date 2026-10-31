@@ -77,3 +77,4 @@ urlpatterns = [
     path('discounts/new/', billing_views.discount_create_view, name='discount_create'),
     path('discounts/<int:discount_id>/toggle/', billing_views.discount_toggle_view, name='discount_toggle'),
 ]
+

@@ -34,3 +34,4 @@ class BrightloopPasswordValidator:
             "Your password must be more than 8 characters, contain at least one uppercase letter, "
             "one lowercase letter, and one special character."
         )
+

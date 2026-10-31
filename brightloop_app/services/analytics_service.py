@@ -119,3 +119,4 @@ class AnalyticsService:
             'payment_methods': payment_methods,
             'query_latency_ms': elapsed_ms,
         }
+
