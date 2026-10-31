@@ -1,0 +1,97 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Product Catalog - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                    <i class="fa-solid fa-box-open text-lg"></i>
+                </span>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Products & Variants</h1>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                "Name, type, sales price, cost price and notes, and variants, for example by brand, where choosing the Odoo brand adds 560 to the price." (Scene 2)
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'plan_list' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-calendar-days mr-1 text-[#714B67]"></i> Manage Plans
+            </a>
+            <a href="{% url 'tax_rule_list' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-receipt mr-1 text-[#714B67]"></i> Tax Rules
+            </a>
+            <a href="{% url 'product_create' %}" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add Product</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Product Cards / Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for prod in products %}
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between hover:shadow-md transition">
+            <div class="space-y-3">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                            {{ prod.get_product_type_display }}
+                        </span>
+                        <h3 class="text-base font-bold text-slate-900 mt-1.5">{{ prod.name }}</h3>
+                    </div>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full {% if prod.is_active %}bg-emerald-100 text-emerald-800{% else %}bg-slate-200 text-slate-600{% endif %}">
+                        {% if prod.is_active %}Active{% else %}Inactive{% endif %}
+                    </span>
+                </div>
+
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-black text-slate-900 font-mono">${{ prod.sales_price|floatformat:2 }}</span>
+                    <span class="text-xs text-slate-400">Cost: ${{ prod.cost_price|floatformat:2 }}</span>
+                </div>
+
+                {% if prod.notes %}
+                <p class="text-xs text-slate-500 line-clamp-2">{{ prod.notes }}</p>
+                {% endif %}
+
+                <!-- Variants List -->
+                <div class="pt-3 border-t border-slate-100 text-xs">
+                    <span class="font-bold text-slate-700 uppercase tracking-wider text-[10px] block mb-1">Configured Variants:</span>
+                    {% if prod.variants.all %}
+                    <div class="space-y-1">
+                        {% for v in prod.variants.all %}
+                        <div class="flex items-center justify-between bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100 text-[11px]">
+                            <span class="text-slate-700 font-medium">{{ v.attribute_name }}: <strong>{{ v.variant_value }}</strong></span>
+                            <span class="font-mono font-bold text-[#714B67]">
+                                {% if v.price_extra > 0 %}+${{ v.price_extra|floatformat:2 }}{% else %}Base Price{% endif %}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-[11px] text-slate-400 italic">No variants configured (Standard edition)</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 mt-4 flex items-center justify-between">
+                <span class="text-[11px] text-slate-400">Default Tax: {{ prod.default_tax_rule.name|default:"None" }}</span>
+                <a href="{% url 'product_edit' prod.id %}" class="text-xs font-bold text-[#714B67] hover:underline flex items-center space-x-1">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Edit / Add Variant</span>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-3 bg-white rounded-2xl p-10 text-center text-slate-400">
+            No products found. Click "Add Product" to create one.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,106 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Subscription Plans - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                    <i class="fa-solid fa-calendar-days text-lg"></i>
+                </span>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Subscription Plans & Rules</h1>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                "What it costs, how often it bills (daily, weekly, monthly or yearly), min quantity, dates available, and plan lifecycle toggles." (Scene 2)
+            </p>
+        </div>
+
+        <a href="{% url 'plan_create' %}" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add Plan</span>
+        </a>
+    </div>
+
+    <!-- Plans Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3.5">Plan Name</th>
+                        <th class="p-3.5">Interval</th>
+                        <th class="p-3.5 text-right">Base Cost</th>
+                        <th class="p-3.5 text-center">Min Qty</th>
+                        <th class="p-3.5">Available Dates</th>
+                        <th class="p-3.5">Lifecycle Rules (Admin Policy)</th>
+                        <th class="p-3.5 text-center">Status</th>
+                        <th class="p-3.5 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for plan in plans %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3.5">
+                            <span class="font-bold text-slate-900 block">{{ plan.name }}</span>
+                            <span class="text-[10px] text-slate-400 font-mono">{{ plan.code }}</span>
+                        </td>
+                        <td class="p-3.5">
+                            <span class="bg-purple-50 text-[#714B67] font-semibold px-2 py-0.5 rounded text-[11px] border border-purple-200">
+                                {{ plan.get_billing_interval_display }}
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
+                            ${{ plan.cost|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-center font-bold text-slate-800">
+                            {{ plan.min_quantity }}
+                        </td>
+                        <td class="p-3.5 text-slate-600">
+                            {{ plan.available_from }} &rarr; {{ plan.available_to|default:"Indefinite" }}
+                        </td>
+                        <td class="p-3.5">
+                            <div class="flex flex-wrap gap-1 text-[10px]">
+                                {% if plan.auto_close_on_end %}
+                                <span class="bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold" title="Closes on its own when finished">Auto-Close</span>
+                                {% endif %}
+                                {% if plan.allow_close_early %}
+                                <span class="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-medium">Early Close OK</span>
+                                {% else %}
+                                <span class="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-medium">No Early Close</span>
+                                {% endif %}
+                                {% if plan.allow_pause %}
+                                <span class="bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded font-medium">Pausable</span>
+                                {% endif %}
+                                {% if plan.allow_renewal %}
+                                <span class="bg-teal-100 text-teal-800 px-1.5 py-0.5 rounded font-medium">Renewable</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            {% if plan.is_active %}
+                            <span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full text-[10px] uppercase">Active</span>
+                            {% else %}
+                            <span class="bg-slate-200 text-slate-600 font-bold px-2 py-0.5 rounded-full text-[10px] uppercase">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <a href="{% url 'plan_edit' plan.id %}" class="text-xs text-[#714B67] hover:underline font-semibold">
+                                Edit
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="p-10 text-center text-slate-400">No plans configured yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

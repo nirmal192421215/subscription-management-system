@@ -1,0 +1,282 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Finance Lead Executive Center - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Top Executive Header & SLA Benchmarking -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                    <i class="fa-solid fa-chart-pie text-lg"></i>
+                </span>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Finance Lead Executive Command</h1>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Real-time recurring revenue, payment collections, and overdue receivables analytics
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <!-- Benchmark Badge proving sub-2-second requirement -->
+            <div class="flex items-center space-x-2 bg-emerald-50 text-emerald-800 border border-emerald-200 px-3.5 py-1.5 rounded-xl text-xs font-semibold">
+                <i class="fa-solid fa-bolt text-emerald-500"></i>
+                <span>Query Time: <strong>{{ overview.query_latency_ms }} ms</strong></span>
+                <span class="text-[10px] bg-emerald-200 text-emerald-900 px-1.5 py-0.5 rounded uppercase font-bold">&lt; 2s SLA</span>
+            </div>
+
+            <a href="{% url 'run_billing_day' %}" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span>Run Billing Day</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Ribbon (Scene 7: filters and a summary view) -->
+    <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+        <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 text-xs items-end">
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Start Date</label>
+                <input type="date" name="start_date" value="{{ start_date|default:'' }}"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">End Date</label>
+                <input type="date" name="end_date" value="{{ end_date|default:'' }}"
+                    class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Filter by Plan</label>
+                <select name="plan" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                    <option value="">All Plans</option>
+                    {% for p in plans %}
+                    <option value="{{ p.id }}" {% if selected_plan == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block font-semibold text-slate-600 mb-1">Filter by Customer</label>
+                <select name="customer" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                    <option value="">All Customers</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}" {% if selected_customer == c.id|stringformat:"s" %}selected{% endif %}>{{ c.display_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button type="submit" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl transition">
+                    <i class="fa-solid fa-filter mr-1"></i> Apply
+                </button>
+                <a href="{% url 'finance_dashboard' %}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl transition">
+                    Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- The 4 Core Questions from Scene 7 in High-Impact KPI Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        
+        <!-- Question 1: How many subscriptions are active? -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+                <span class="text-xs font-bold uppercase tracking-wider">Active Subscriptions</span>
+                <span class="p-2 rounded-xl bg-purple-50 text-[#714B67]">
+                    <i class="fa-solid fa-circle-check text-base"></i>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-black text-slate-900">{{ overview.active_subscriptions_count }}</div>
+                <div class="flex items-center space-x-2 text-xs text-slate-500 mt-1">
+                    <span>MRR: <strong>${{ overview.mrr|floatformat:2 }}</strong></span>
+                    <span>&bull;</span>
+                    <span>ARR: <strong>${{ overview.arr|floatformat:2 }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Question 2: How much revenue came in? -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+                <span class="text-xs font-bold uppercase tracking-wider">Revenue Came In (Cash)</span>
+                <span class="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                    <i class="fa-solid fa-money-bill-wave text-base"></i>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-black text-emerald-700">${{ overview.total_revenue_collected|floatformat:2 }}</div>
+                <p class="text-xs text-slate-500 mt-1">
+                    Total settled cash collected from customer payments
+                </p>
+            </div>
+        </div>
+
+        <!-- Question 3: How much is still owed? -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+                <span class="text-xs font-bold uppercase tracking-wider">Amount Still Owed</span>
+                <span class="p-2 rounded-xl bg-amber-50 text-amber-600">
+                    <i class="fa-solid fa-hourglass-half text-base"></i>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-black text-amber-600">${{ overview.total_still_owed|floatformat:2 }}</div>
+                <p class="text-xs text-slate-500 mt-1">
+                    Unpaid balances on confirmed & outstanding invoices
+                </p>
+            </div>
+        </div>
+
+        <!-- Question 4: Which invoices are overdue? -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-slate-500">
+                <span class="text-xs font-bold uppercase tracking-wider">Overdue Invoices</span>
+                <span class="p-2 rounded-xl bg-rose-50 text-rose-600">
+                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                </span>
+            </div>
+            <div class="mt-4">
+                <div class="text-3xl font-black text-rose-600">${{ overview.total_overdue_amount|floatformat:2 }}</div>
+                <div class="flex items-center space-x-2 text-xs text-rose-700 mt-1">
+                    <span class="font-bold">{{ overview.overdue_count }} overdue invoice{{ overview.overdue_count|pluralize }}</span>
+                    <span>&bull;</span>
+                    <a href="#overdue-section" class="underline font-semibold">Chase now &darr;</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scene 6 & 7: Overdue Invoices Immediate Chase Table -->
+    <div id="overdue-section" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <div>
+                <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                    <span class="w-3 h-3 rounded-full bg-rose-500 animate-pulse"></span>
+                    <span>Overdue Invoices Needing Chase</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    "So overdue ones can be chased before they turn into lost revenue." (Scene 6)
+                </p>
+            </div>
+            <span class="text-xs font-bold bg-rose-100 text-rose-800 px-3 py-1 rounded-full">
+                {{ overview.overdue_count }} Action Required
+            </span>
+        </div>
+
+        {% if overview.overdue_invoices %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3.5">Invoice #</th>
+                        <th class="p-3.5">Customer / Company</th>
+                        <th class="p-3.5">Due Date</th>
+                        <th class="p-3.5">Overdue By</th>
+                        <th class="p-3.5 text-right">Balance Due</th>
+                        <th class="p-3.5 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for inv in overview.overdue_invoices %}
+                    <tr class="hover:bg-rose-50/40 transition">
+                        <td class="p-3.5 font-bold font-mono text-[#714B67]">
+                            <a href="{% url 'invoice_detail' inv.id %}" class="hover:underline">{{ inv.invoice_number }}</a>
+                        </td>
+                        <td class="p-3.5">
+                            <div class="font-semibold text-slate-900">{{ inv.customer.display_name }}</div>
+                            <div class="text-[11px] text-slate-500">{{ inv.customer.email }}</div>
+                        </td>
+                        <td class="p-3.5 text-slate-600 font-medium">
+                            {{ inv.due_date }}
+                        </td>
+                        <td class="p-3.5">
+                            <span class="bg-rose-100 text-rose-800 font-bold px-2.5 py-1 rounded-full text-[11px]">
+                                {{ inv.overdue_days }} days overdue
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-right font-bold text-rose-600 font-mono text-sm">
+                            ${{ inv.balance_due|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{% url 'invoice_send' inv.id %}" class="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold shadow-sm transition" title="Send Chase Reminder Email">
+                                    <i class="fa-solid fa-paper-plane mr-1"></i> Chase
+                                </a>
+                                <a href="{% url 'payment_record' inv.id %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-xs font-semibold shadow-sm transition" title="Record Payment">
+                                    <i class="fa-solid fa-hand-holding-dollar mr-1"></i> Collect
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-10 text-center text-slate-500">
+            <i class="fa-solid fa-circle-check text-3xl text-emerald-500 mb-2"></i>
+            <p class="font-semibold">All accounts up to date!</p>
+            <p class="text-xs text-slate-400 mt-1">No overdue invoices currently requiring follow-up.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Charts & Breakdown Grids -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Plan Breakdown -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                <i class="fa-solid fa-layer-group text-[#714B67]"></i>
+                <span>Active Subscriptions by Plan</span>
+            </h3>
+            <div class="space-y-3">
+                {% for p in overview.plan_breakdown %}
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div>
+                        <div class="font-semibold text-slate-900 text-xs">{{ p.plan_name }}</div>
+                        <div class="text-[11px] text-slate-500">{{ p.interval }} &bull; ${{ p.base_cost }}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-black bg-purple-100 text-[#714B67] px-2.5 py-1 rounded-full">
+                            {{ p.active_count }} active
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400">No plan data available.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Payment Methods Breakdown -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center space-x-2">
+                <i class="fa-solid fa-credit-card text-[#714B67]"></i>
+                <span>Collected Revenue by Payment Channel</span>
+            </h3>
+            <div class="space-y-3">
+                {% for pm in overview.payment_methods %}
+                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+                        <span class="font-semibold text-slate-900 text-xs capitalize">{{ pm.payment_method|title }}</span>
+                        <span class="text-[11px] text-slate-400">({{ pm.count }} payments)</span>
+                    </div>
+                    <div class="font-mono font-bold text-slate-900 text-xs">
+                        ${{ pm.total|floatformat:2 }}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-xs text-slate-400">No payment data recorded yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

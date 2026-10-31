@@ -1,0 +1,144 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Subscriptions & Quotes - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Action Buttons -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                    <i class="fa-solid fa-file-contract text-lg"></i>
+                </span>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Subscriptions & Quotations</h1>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Lifecycle management from Draft &rarr; Quotation &rarr; Confirmed &rarr; Active &rarr; Closed
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'template_list' %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-clone text-[#714B67]"></i>
+                <span>Quotation Templates</span>
+            </a>
+            <a href="{% url 'subscription_create' %}" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-plus"></i>
+                <span>New Subscription</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters & Search Bar -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <form method="GET" class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <!-- Search -->
+            <div class="relative w-full sm:w-72">
+                <input type="text" name="q" value="{{ search_q|default:'' }}"
+                    class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none"
+                    placeholder="Search by customer, company, sub #...">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+            </div>
+
+            <!-- Status Tabs / Select -->
+            <div class="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
+                <a href="{% url 'subscription_list' %}"
+                    class="px-3 py-1.5 rounded-lg font-semibold transition {% if not current_status %}bg-[#714B67] text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    All
+                </a>
+                {% for st, label in statuses %}
+                <a href="?status={{ st }}{% if search_q %}&q={{ search_q }}{% endif %}"
+                    class="px-3 py-1.5 rounded-lg font-semibold whitespace-nowrap transition {% if current_status == st %}bg-[#714B67] text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    {{ label }}
+                </a>
+                {% endfor %}
+            </div>
+        </form>
+    </div>
+
+    <!-- Subscriptions List Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3.5">Subscription #</th>
+                        <th class="p-3.5">Customer</th>
+                        <th class="p-3.5">Plan</th>
+                        <th class="p-3.5">Start Date</th>
+                        <th class="p-3.5">Next Billing</th>
+                        <th class="p-3.5 text-right">Recurring Total</th>
+                        <th class="p-3.5 text-center">Status</th>
+                        <th class="p-3.5 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for sub in subscriptions %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3.5 font-bold font-mono text-[#714B67]">
+                            <a href="{% url 'subscription_detail' sub.id %}" class="hover:underline flex items-center space-x-1.5">
+                                <span>{{ sub.subscription_number }}</span>
+                            </a>
+                        </td>
+                        <td class="p-3.5">
+                            <div class="font-bold text-slate-900">{{ sub.customer.display_name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ sub.customer.email }}</div>
+                        </td>
+                        <td class="p-3.5 font-medium text-slate-700">
+                            {{ sub.plan.name }}
+                            <span class="text-[10px] text-slate-400 block">({{ sub.plan.get_billing_interval_display }})</span>
+                        </td>
+                        <td class="p-3.5 text-slate-600">
+                            {{ sub.start_date }}
+                        </td>
+                        <td class="p-3.5 text-slate-600 font-medium">
+                            {% if sub.next_billing_date %}
+                            {{ sub.next_billing_date }}
+                            {% else %}
+                            <span class="text-slate-400">&mdash;</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
+                            ${{ sub.calculate_grand_total|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase
+                                {% if sub.status == 'active' %}bg-emerald-100 text-emerald-800
+                                {% elif sub.status == 'quotation' %}bg-purple-100 text-purple-800
+                                {% elif sub.status == 'confirmed' %}bg-blue-100 text-blue-800
+                                {% elif sub.status == 'paused' %}bg-amber-100 text-amber-800
+                                {% elif sub.status == 'closed' %}bg-slate-200 text-slate-700
+                                {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                {{ sub.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{% url 'subscription_detail' sub.id %}" class="text-slate-600 hover:text-[#714B67] p-1.5" title="View Details">
+                                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                </a>
+                                <a href="{% url 'subscription_pdf' sub.id %}" class="text-slate-600 hover:text-purple-600 p-1.5" title="Download Quote PDF">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="p-10 text-center text-slate-400">
+                            <i class="fa-solid fa-file-circle-xmark text-3xl mb-2 text-slate-300"></i>
+                            <p class="font-medium">No subscriptions match the selected criteria.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

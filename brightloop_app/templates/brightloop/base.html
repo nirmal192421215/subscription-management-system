@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Brightloop Software - Subscription Management{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        odoo: {
+                            50: '#f9f6f8',
+                            100: '#f4edf2',
+                            500: '#875A7B',
+                            600: '#714B67',
+                            700: '#5c3d54',
+                            800: '#483042',
+                            teal: '#017e84',
+                            dark: '#1e242b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .odoo-bg-gradient {
+            background: linear-gradient(135deg, #714B67 0%, #017E84 100%);
+        }
+        .odoo-header {
+            background-color: #714B67;
+        }
+        .odoo-subtle {
+            background-color: #f8fafc;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-[#714B67] text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Brand / Logo -->
+                <div class="flex items-center space-x-3">
+                    <a href="{% if user.is_authenticated %}{% if is_customer %}{% url 'portal_dashboard' %}{% else %}{% url 'finance_dashboard' %}{% endif %}{% else %}{% url 'login' %}{% endif %}" class="flex items-center space-x-2 text-xl font-bold tracking-tight">
+                        <span class="bg-white text-[#714B67] rounded-lg p-1.5 shadow-sm">
+                            <i class="fa-solid fa-arrows-rotate text-lg"></i>
+                        </span>
+                        <span class="text-white tracking-wide">Brightloop<span class="text-teal-300 font-normal">.odoo</span></span>
+                    </a>
+                    <span class="hidden md:inline-block text-xs uppercase tracking-widest bg-[#5c3d54] text-teal-200 px-2.5 py-1 rounded-full font-medium">
+                        Subscription Engine
+                    </span>
+                </div>
+
+                <!-- Center: Navigation Links for authenticated staff -->
+                {% if user.is_authenticated %}
+                <nav class="hidden lg:flex items-center space-x-1 text-sm font-medium">
+                    {% if is_staff %}
+                    <a href="{% url 'finance_dashboard' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-chart-line text-xs text-teal-300"></i>
+                        <span>Finance Lead</span>
+                    </a>
+                    <a href="{% url 'subscription_list' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-file-contract text-xs text-teal-300"></i>
+                        <span>Subscriptions</span>
+                    </a>
+                    <a href="{% url 'invoice_list' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition flex items-center space-x-1.5 relative">
+                        <i class="fa-solid fa-receipt text-xs text-teal-300"></i>
+                        <span>Invoices</span>
+                        {% if overdue_count > 0 %}
+                        <span class="bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm ml-1 animate-pulse">
+                            {{ overdue_count }} overdue
+                        </span>
+                        {% endif %}
+                    </a>
+                    <a href="{% url 'run_billing_day' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-bolt text-xs text-amber-300"></i>
+                        <span>Billing Day</span>
+                    </a>
+                    <a href="{% url 'product_list' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-box-open text-xs text-teal-300"></i>
+                        <span>Catalog</span>
+                    </a>
+                    {% if is_admin %}
+                    <a href="{% url 'discount_list' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-tags text-xs text-teal-300"></i>
+                        <span>Discounts</span>
+                    </a>
+                    <a href="{% url 'staff_list' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition flex items-center space-x-1.5">
+                        <i class="fa-solid fa-users-gear text-xs text-teal-300"></i>
+                        <span>Staff</span>
+                    </a>
+                    {% endif %}
+                    {% else %}
+                    <!-- Customer Links -->
+                    <a href="{% url 'portal_dashboard' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition">Overview</a>
+                    <a href="{% url 'portal_subscriptions' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition">My Subscriptions</a>
+                    <a href="{% url 'portal_invoices' %}" class="px-3 py-2 rounded-md hover:bg-white/10 transition">My Invoices</a>
+                    {% endif %}
+                </nav>
+                {% endif %}
+
+                <!-- Right Side: User profile & Demo Switcher -->
+                <div class="flex items-center space-x-3">
+                    {% if user.is_authenticated %}
+                        <!-- Quick Role Switcher for Hackathon Evaluation -->
+                        <div class="relative group">
+                            <button type="button" class="flex items-center space-x-2 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition border border-white/20">
+                                <i class="fa-solid fa-user-astronaut text-teal-300"></i>
+                                <span class="hidden sm:inline">Role Switcher:</span>
+                                <span class="font-bold underline decoration-teal-300">{{ user.get_role_display }}</span>
+                                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+                            </button>
+                            <!-- Dropdown -->
+                            <div class="absolute right-0 mt-2 w-72 bg-white text-slate-800 rounded-xl shadow-2xl py-2 hidden group-hover:block z-50 border border-slate-200">
+                                <div class="px-4 py-2 border-b border-slate-100 bg-slate-50">
+                                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Demo Accounts Switcher</p>
+                                    <p class="text-[11px] text-slate-400">Click to preview system from another persona</p>
+                                </div>
+                                <div class="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                                    {% for du in demo_users %}
+                                    <a href="{% url 'demo_switch_user' du.id %}" class="flex items-center justify-between px-4 py-2.5 hover:bg-slate-50 text-xs transition {% if du.id == user.id %}bg-purple-50 font-semibold{% endif %}">
+                                        <div>
+                                            <p class="font-medium text-slate-900">{{ du.display_name }}</p>
+                                            <p class="text-[11px] text-slate-500">{{ du.email }}</p>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full font-bold
+                                            {% if du.role == 'admin' %}bg-purple-100 text-purple-700
+                                            {% elif du.role == 'staff' %}bg-blue-100 text-blue-700
+                                            {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                            {{ du.get_role_display }}
+                                        </span>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Profile Info & Logout -->
+                        <div class="flex items-center space-x-2 pl-2 border-l border-white/20">
+                            <span class="hidden md:block text-xs text-right">
+                                <span class="block font-semibold leading-tight">{{ user.display_name }}</span>
+                                <span class="text-[11px] text-teal-200">{{ user.email }}</span>
+                            </span>
+                            <a href="{% url 'logout' %}" title="Log Out" class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition">
+                                <i class="fa-solid fa-right-from-bracket"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="text-sm font-medium hover:text-teal-200 px-3 py-1.5 transition">Log In</a>
+                        <a href="{% url 'register' %}" class="text-sm font-semibold bg-white text-[#714B67] hover:bg-teal-50 px-4 py-1.5 rounded-lg shadow-sm transition">Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notification Messages Banner -->
+    {% if messages %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% for message in messages %}
+        <div class="rounded-xl p-4 mb-3 flex items-start space-x-3 shadow-sm border
+            {% if message.tags == 'success' %}bg-emerald-50 border-emerald-200 text-emerald-900
+            {% elif message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-900
+            {% elif message.tags == 'warning' %}bg-amber-50 border-amber-200 text-amber-900
+            {% else %}bg-blue-50 border-blue-200 text-blue-900{% endif %}">
+            <span class="mt-0.5 text-base">
+                {% if message.tags == 'success' %}<i class="fa-solid fa-circle-check text-emerald-500"></i>
+                {% elif message.tags == 'error' %}<i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
+                {% elif message.tags == 'warning' %}<i class="fa-solid fa-circle-exclamation text-amber-500"></i>
+                {% else %}<i class="fa-solid fa-circle-info text-blue-500"></i>{% endif %}
+            </span>
+            <div class="flex-1 text-sm font-medium">
+                {{ message }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 text-slate-500 text-xs py-6 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between space-y-2 sm:space-y-0">
+            <div class="flex items-center space-x-2">
+                <span class="font-bold text-[#714B67]">Brightloop Software</span>
+                <span>&bull;</span>
+                <span>Recurring Billing & Subscription Management Platform</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-slate-400">Odoo Hackathon Solution</span>
+                <span class="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded text-[11px] font-medium border border-emerald-200">
+                    <i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> System Operational
+                </span>
+            </div>
+        </div>
+    </footer>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

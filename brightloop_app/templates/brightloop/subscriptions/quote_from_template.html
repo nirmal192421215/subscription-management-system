@@ -1,0 +1,77 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Create Quote from Template - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto space-y-6">
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex items-center space-x-2 pb-4 border-b border-slate-100 mb-6">
+            <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                <i class="fa-solid fa-file-signature text-lg"></i>
+            </span>
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">Prepare Quotation Offer</h1>
+                <p class="text-xs text-slate-500">From Template: <strong class="text-purple-800">{{ template.name }}</strong></p>
+            </div>
+        </div>
+
+        <div class="p-4 bg-purple-50/60 rounded-xl border border-purple-100 mb-6 text-xs space-y-2">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700">Pre-Configured Plan:</span>
+                <span class="font-semibold text-[#714B67]">{{ template.plan.name }} ({{ template.plan.get_billing_interval_display }})</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700">Validity Period:</span>
+                <span class="font-semibold text-slate-800">{{ template.valid_days }} Days from start date</span>
+            </div>
+            <div class="pt-2 border-t border-purple-100">
+                <span class="font-bold text-slate-700 block mb-1">Pre-populated Items:</span>
+                <ul class="space-y-0.5 text-slate-600">
+                    {% for l in template.lines.all %}
+                    <li>&bull; {{ l.quantity }}x {{ l.product.name }}{% if l.variant %} ({{ l.variant.variant_value }}){% endif %} @ ${{ l.unit_price }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <form method="POST" class="space-y-5 text-xs">
+            {% csrf_token %}
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Customer / Prospect</label>
+                <select name="customer_id" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none text-xs">
+                    <option value="">-- Choose Customer --</option>
+                    {% for c in customers %}
+                    <option value="{{ c.id }}">{{ c.display_name }} ({{ c.email }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Quotation Start Date</label>
+                    <input type="date" name="start_date" value="{{ today }}" required
+                        class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Payment Terms</label>
+                    <select name="payment_terms" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                        <option value="immediate">Immediate Payment</option>
+                        <option value="net_15">15 Days (Net 15)</option>
+                        <option value="net_30" selected>30 Days (Net 30)</option>
+                        <option value="net_60">60 Days (Net 60)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+                <a href="{% url 'template_list' %}" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold transition">Cancel</a>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-[#714B67] hover:bg-[#5c3d54] text-white font-bold shadow-md transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Generate Instant Quotation</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

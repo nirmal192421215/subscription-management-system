@@ -1,0 +1,408 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Subscription {{ subscription.subscription_number }} - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Top Action Ribbon & Status Bar (Odoo Style) -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="text-xs uppercase tracking-wider font-bold text-slate-500">Subscription Document</span>
+                    <span class="text-slate-300">&bull;</span>
+                    <span class="text-xs font-mono font-bold text-purple-700">{{ subscription.plan.name }}</span>
+                </div>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight mt-1">{{ subscription.subscription_number }}</h1>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    Customer: <strong class="text-slate-800">{{ subscription.customer.display_name }}</strong> ({{ subscription.customer.email }})
+                </p>
+            </div>
+
+            <!-- Odoo-Style State Progress Ribbon -->
+            <div class="flex items-center space-x-1 bg-slate-100 p-1.5 rounded-xl border border-slate-200 overflow-x-auto">
+                <span class="px-3 py-1 rounded-lg text-xs font-bold transition {% if subscription.status == 'draft' %}bg-[#714B67] text-white shadow-sm{% else %}text-slate-500{% endif %}">
+                    1. Draft
+                </span>
+                <span class="text-slate-300">&rarr;</span>
+                <span class="px-3 py-1 rounded-lg text-xs font-bold transition {% if subscription.status == 'quotation' %}bg-[#714B67] text-white shadow-sm{% else %}text-slate-500{% endif %}">
+                    2. Quotation
+                </span>
+                <span class="text-slate-300">&rarr;</span>
+                <span class="px-3 py-1 rounded-lg text-xs font-bold transition {% if subscription.status == 'confirmed' %}bg-[#714B67] text-white shadow-sm{% else %}text-slate-500{% endif %}">
+                    3. Confirmed
+                </span>
+                <span class="text-slate-300">&rarr;</span>
+                <span class="px-3 py-1 rounded-lg text-xs font-bold transition {% if subscription.status == 'active' %}bg-emerald-600 text-white shadow-sm{% elif subscription.status == 'paused' %}bg-amber-500 text-white shadow-sm{% else %}text-slate-500{% endif %}">
+                    4. Active {% if subscription.status == 'paused' %}(Paused){% endif %}
+                </span>
+                <span class="text-slate-300">&rarr;</span>
+                <span class="px-3 py-1 rounded-lg text-xs font-bold transition {% if subscription.status == 'closed' %}bg-slate-700 text-white shadow-sm{% else %}text-slate-500{% endif %}">
+                    5. Closed
+                </span>
+            </div>
+        </div>
+
+        <!-- Action Buttons Workflow Bar -->
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
+            {% if subscription.status == 'draft' %}
+            <a href="{% url 'subscription_status_change' subscription.id 'quotation' %}" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
+                <i class="fa-solid fa-paper-plane mr-1"></i> Send as Quotation Offer
+            </a>
+            {% elif subscription.status == 'quotation' %}
+            <a href="{% url 'subscription_status_change' subscription.id 'confirmed' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
+                <i class="fa-solid fa-check-double mr-1"></i> Mark as Confirmed
+            </a>
+            {% elif subscription.status == 'confirmed' %}
+            <a href="{% url 'subscription_status_change' subscription.id 'active' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition">
+                <i class="fa-solid fa-play mr-1"></i> Activate Subscription & Start Billing
+            </a>
+            {% endif %}
+
+            {% if subscription.status == 'active' %}
+                {% if subscription.can_pause %}
+                <a href="{% url 'subscription_status_change' subscription.id 'paused' %}" class="bg-amber-500 hover:bg-amber-600 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-pause mr-1"></i> Pause
+                </a>
+                {% endif %}
+                {% if subscription.can_close_early %}
+                <a href="{% url 'subscription_status_change' subscription.id 'closed' %}" onclick="return confirm('Are you sure you want to close this subscription early?')" class="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-stop mr-1"></i> Close Early
+                </a>
+                {% endif %}
+            {% elif subscription.status == 'paused' %}
+            <a href="{% url 'subscription_status_change' subscription.id 'active' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-play mr-1"></i> Resume Subscription
+            </a>
+            {% endif %}
+
+            {% if subscription.status == 'closed' or subscription.status == 'active' %}
+                {% if subscription.can_renew %}
+                <a href="{% url 'subscription_status_change' subscription.id 'renew' %}" class="bg-teal-600 hover:bg-teal-700 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-arrows-rotate mr-1"></i> Renew Subscription
+                </a>
+                {% endif %}
+            {% endif %}
+
+            <a href="{% url 'subscription_pdf' subscription.id %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-file-pdf mr-1 text-[#714B67]"></i> Download Quote PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Metadata & Plan Policies Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Subscription Key Info -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 lg:col-span-2 space-y-4">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-circle-info text-[#714B67]"></i>
+                <span>Contract & Billing Parameters</span>
+            </h2>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-xs">
+                <div>
+                    <span class="text-slate-400 block font-medium">Customer</span>
+                    <span class="font-bold text-slate-800">{{ subscription.customer.display_name }}</span>
+                    <span class="text-[11px] text-slate-500 block">{{ subscription.customer.address|default:"No address" }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block font-medium">Plan</span>
+                    <span class="font-bold text-slate-800">{{ subscription.plan.name }}</span>
+                    <span class="text-[11px] text-purple-700 font-semibold block">${{ subscription.plan.cost }} / {{ subscription.plan.get_billing_interval_display }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block font-medium">Payment Terms</span>
+                    <span class="font-bold text-slate-800">{{ subscription.get_payment_terms_display }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block font-medium">Start Date</span>
+                    <span class="font-bold text-slate-800">{{ subscription.start_date }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block font-medium">Expiry Date</span>
+                    <span class="font-bold text-slate-800">{{ subscription.expiry_date|default:"Ongoing" }}</span>
+                </div>
+                <div>
+                    <span class="text-slate-400 block font-medium">Next Billing Date</span>
+                    <span class="font-bold text-emerald-700">{{ subscription.next_billing_date|default:"N/A" }}</span>
+                </div>
+            </div>
+
+            {% if subscription.notes %}
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs">
+                <span class="font-semibold text-slate-500 block mb-0.5">Notes:</span>
+                <p class="text-slate-700">{{ subscription.notes }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Plan Rules / Policies (Scene 2 Admin Rules) -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-sliders text-[#714B67]"></i>
+                <span>Plan Lifecycle Rules</span>
+            </h2>
+            <p class="text-[11px] text-slate-400">Rules configured by admin for "{{ subscription.plan.name }}"</p>
+
+            <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-600">Auto-close when ended</span>
+                    {% if subscription.plan.auto_close_on_end %}
+                    <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check"></i> Yes</span>
+                    {% else %}
+                    <span class="text-slate-400 font-bold"><i class="fa-solid fa-xmark"></i> No</span>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-600">Can be closed early</span>
+                    {% if subscription.plan.allow_close_early %}
+                    <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check"></i> Yes</span>
+                    {% else %}
+                    <span class="text-rose-600 font-bold"><i class="fa-solid fa-ban"></i> Restricted</span>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-600">Can be paused</span>
+                    {% if subscription.plan.allow_pause %}
+                    <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check"></i> Yes</span>
+                    {% else %}
+                    <span class="text-rose-600 font-bold"><i class="fa-solid fa-ban"></i> Restricted</span>
+                    {% endif %}
+                </div>
+
+                <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-600">Can be renewed</span>
+                    {% if subscription.plan.allow_renewal %}
+                    <span class="text-emerald-700 font-bold"><i class="fa-solid fa-check"></i> Yes</span>
+                    {% else %}
+                    <span class="text-rose-600 font-bold"><i class="fa-solid fa-ban"></i> Restricted</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Product Lines Section -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-list-check text-[#714B67]"></i>
+                <span>Subscription Product Lines</span>
+            </h2>
+
+            <button type="button" onclick="document.getElementById('add-line-modal').classList.toggle('hidden')"
+                class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1">
+                <i class="fa-solid fa-plus"></i>
+                <span>Add Product Line</span>
+            </button>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3.5">Product & Variant</th>
+                        <th class="p-3.5 text-center">Quantity</th>
+                        <th class="p-3.5 text-right">Unit Price</th>
+                        <th class="p-3.5 text-right">Tax Rule</th>
+                        <th class="p-3.5 text-right">Subtotal</th>
+                        <th class="p-3.5 text-right">Tax Amount</th>
+                        <th class="p-3.5 text-right">Total Amount</th>
+                        <th class="p-3.5 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for line in subscription.lines.all %}
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-3.5">
+                            <span class="font-bold text-slate-900">{{ line.product.name }}</span>
+                            {% if line.variant %}
+                            <span class="inline-block bg-purple-50 text-purple-700 text-[10px] px-2 py-0.5 rounded-md font-semibold border border-purple-200 ml-1.5">
+                                {{ line.variant.attribute_name }}: {{ line.variant.variant_value }} (+${{ line.variant.price_extra }})
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3.5 text-center font-bold text-slate-800">
+                            {{ line.quantity }}
+                        </td>
+                        <td class="p-3.5 text-right font-mono text-slate-700">
+                            ${{ line.unit_price|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-right text-slate-600">
+                            {{ line.tax_rule.name|default:"None" }}
+                        </td>
+                        <td class="p-3.5 text-right font-mono text-slate-800">
+                            ${{ line.subtotal|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-right font-mono text-slate-500">
+                            ${{ line.tax_amount|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
+                            ${{ line.total_amount|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <a href="{% url 'subscription_delete_line' line.id %}" onclick="return confirm('Remove line?')" class="text-rose-500 hover:text-rose-700 p-1" title="Delete Line">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="p-8 text-center text-slate-400">
+                            No product lines on this subscription yet. Click "Add Product Line" to add products.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals Summary Block -->
+        <div class="p-6 bg-slate-50 border-t border-slate-200 flex justify-end">
+            <div class="w-72 space-y-2 text-xs">
+                <div class="flex justify-between text-slate-600">
+                    <span>Subtotal:</span>
+                    <span class="font-mono font-bold">${{ subtotal|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-slate-600">
+                    <span>Taxes:</span>
+                    <span class="font-mono font-bold">+${{ tax_total|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
+                    <span>Recurring Total:</span>
+                    <span class="font-mono text-purple-900">${{ grand_total|floatformat:2 }}</span>
+                </div>
+                <p class="text-[10px] text-slate-400 text-right">Billed recurringly every {{ subscription.plan.get_billing_interval_display }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Invoices History -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+            <i class="fa-solid fa-receipt text-[#714B67]"></i>
+            <span>Invoices Generated for this Subscription</span>
+        </h2>
+
+        {% if invoices %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3">Invoice #</th>
+                        <th class="p-3">Invoice Date</th>
+                        <th class="p-3">Due Date</th>
+                        <th class="p-3">Period</th>
+                        <th class="p-3 text-right">Total</th>
+                        <th class="p-3 text-right">Balance Due</th>
+                        <th class="p-3 text-center">Status</th>
+                        <th class="p-3 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for inv in invoices %}
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 font-bold font-mono text-[#714B67]">
+                            <a href="{% url 'invoice_detail' inv.id %}" class="hover:underline">{{ inv.invoice_number }}</a>
+                        </td>
+                        <td class="p-3 text-slate-600">{{ inv.invoice_date }}</td>
+                        <td class="p-3 text-slate-600">{{ inv.due_date }}</td>
+                        <td class="p-3 text-slate-500 text-[11px]">{{ inv.billing_period_start }} to {{ inv.billing_period_end }}</td>
+                        <td class="p-3 text-right font-mono font-bold">${{ inv.total_amount|floatformat:2 }}</td>
+                        <td class="p-3 text-right font-mono font-bold {% if inv.balance_due > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                            ${{ inv.balance_due|floatformat:2 }}
+                        </td>
+                        <td class="p-3 text-center">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                {% if inv.status == 'paid' %}bg-emerald-100 text-emerald-800
+                                {% elif inv.is_overdue %}bg-rose-100 text-rose-800
+                                {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                {% if inv.is_overdue %}OVERDUE{% else %}{{ inv.get_status_display }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">
+                            <a href="{% url 'invoice_detail' inv.id %}" class="text-xs text-[#714B67] hover:underline font-semibold">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-400">No invoices generated yet. Use the "Run Billing Day" engine or wait for the recurring billing trigger.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Modal: Add Product Line -->
+<div id="add-line-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+            <h3 class="text-sm font-bold text-slate-900">Add Line Item to {{ subscription.subscription_number }}</h3>
+            <button type="button" onclick="document.getElementById('add-line-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'subscription_add_line' subscription.id %}" class="space-y-4 text-xs">
+            {% csrf_token %}
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Product</label>
+                <select name="product_id" required class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                    {% for p in products %}
+                    <option value="{{ p.id }}">{{ p.name }} (${{ p.sales_price }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Variant (Optional)</label>
+                <select name="variant_id" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                    <option value="">No variant (Base Product)</option>
+                    {% for p in products %}
+                        {% for v in p.variants.all %}
+                        <option value="{{ v.id }}">{{ p.name }} &rarr; {{ v.attribute_name }}: {{ v.variant_value }} (+${{ v.price_extra }})</option>
+                        {% endfor %}
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Quantity</label>
+                    <input type="number" name="quantity" min="1" value="1" required class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Custom Price ($)</label>
+                    <input type="number" step="0.01" name="unit_price" placeholder="Default price" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Tax Rule</label>
+                <select name="tax_rule_id" class="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none">
+                    <option value="">No Tax</option>
+                    {% for t in taxes %}
+                    <option value="{{ t.id }}" {% if forloop.first %}selected{% endif %}>{{ t.name }} ({{ t.rate }}%)</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex items-center justify-end space-x-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="document.getElementById('add-line-modal').classList.add('hidden')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold transition">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 rounded-xl bg-[#714B67] hover:bg-[#5c3d54] text-white font-bold transition">
+                    Add Line
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Manage Subscription {{ subscription.subscription_number }}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Self-service Actions -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+                <a href="{% url 'portal_subscriptions' %}" class="text-xs text-[#714B67] font-semibold hover:underline">&larr; Back to Subscriptions</a>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight mt-1">{{ subscription.subscription_number }}</h1>
+                <p class="text-xs text-slate-500 mt-0.5">
+                    Plan: <strong class="text-purple-700">{{ subscription.plan.name }}</strong> ({{ subscription.plan.get_billing_interval_display }})
+                </p>
+            </div>
+
+            <div>
+                <span class="px-3 py-1.5 rounded-full text-xs font-bold uppercase
+                    {% if subscription.status == 'active' %}bg-emerald-100 text-emerald-800
+                    {% elif subscription.status == 'paused' %}bg-amber-100 text-amber-800
+                    {% elif subscription.status == 'closed' %}bg-slate-200 text-slate-700
+                    {% else %}bg-purple-100 text-purple-800{% endif %}">
+                    Status: {{ subscription.get_status_display }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Customer Self-Service Actions (Scene 1 & 2) -->
+        <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+            {% if subscription.status == 'active' %}
+                {% if subscription.can_pause %}
+                <a href="{% url 'portal_subscription_action' subscription.id 'pause' %}" onclick="return confirm('Pause this subscription?')" class="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-pause mr-1"></i> Pause Subscription
+                </a>
+                {% endif %}
+
+                {% if subscription.can_close_early %}
+                <a href="{% url 'portal_subscription_action' subscription.id 'close_early' %}" onclick="return confirm('Are you sure you want to cancel and close your subscription?')" class="bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                    <i class="fa-solid fa-stop mr-1"></i> Close Subscription Early
+                </a>
+                {% endif %}
+            {% elif subscription.status == 'paused' %}
+            <a href="{% url 'portal_subscription_action' subscription.id 'resume' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-play mr-1"></i> Resume Subscription
+            </a>
+            {% endif %}
+
+            {% if subscription.can_renew %}
+            <a href="{% url 'portal_subscription_action' subscription.id 'renew' %}" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-arrows-rotate mr-1"></i> Renew Subscription
+            </a>
+            {% endif %}
+
+            <a href="{% url 'subscription_pdf' subscription.id %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-bold transition">
+                <i class="fa-solid fa-file-pdf mr-1 text-[#714B67]"></i> Contract PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Contract Parameters -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3 text-xs">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-clock-rotate-left text-[#714B67]"></i>
+                <span>Billing Schedule</span>
+            </h2>
+
+            <div class="space-y-2">
+                <div class="flex justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-500">Subscription Started:</span>
+                    <span class="font-bold text-slate-800">{{ subscription.start_date }}</span>
+                </div>
+                <div class="flex justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-500">Current Expiry / Term:</span>
+                    <span class="font-bold text-slate-800">{{ subscription.expiry_date|default:"Ongoing" }}</span>
+                </div>
+                <div class="flex justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-500">Next Automatic Invoice:</span>
+                    <span class="font-bold text-emerald-700">{{ subscription.next_billing_date|default:"N/A" }}</span>
+                </div>
+                <div class="flex justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-500">Payment Terms:</span>
+                    <span class="font-bold text-slate-800">{{ subscription.get_payment_terms_display }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Plan Policy Privileges -->
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-3 text-xs">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center space-x-2">
+                <i class="fa-solid fa-circle-check text-[#714B67]"></i>
+                <span>Self-Service Plan Policy</span>
+            </h2>
+
+            <div class="space-y-2">
+                <div class="flex justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-600">Can pause anytime:</span>
+                    <span class="font-bold {% if subscription.plan.allow_pause %}text-emerald-700{% else %}text-slate-400{% endif %}">
+                        {% if subscription.plan.allow_pause %}Permitted{% else %}Not allowed on this tier{% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-600">Can close early:</span>
+                    <span class="font-bold {% if subscription.plan.allow_close_early %}text-emerald-700{% else %}text-slate-400{% endif %}">
+                        {% if subscription.plan.allow_close_early %}Permitted{% else %}Contract commitment required{% endif %}
+                    </span>
+                </div>
+                <div class="flex justify-between p-2 rounded-lg bg-slate-50">
+                    <span class="text-slate-600">Can self-renew:</span>
+                    <span class="font-bold {% if subscription.plan.allow_renewal %}text-emerald-700{% else %}text-slate-400{% endif %}">
+                        {% if subscription.plan.allow_renewal %}Permitted{% else %}One-off trial only{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items in this Subscription -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-5 border-b border-slate-100">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Product Lines</h2>
+        </div>
+        <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100">
+                <tr>
+                    <th class="p-3">Product</th>
+                    <th class="p-3 text-center">Seats / Qty</th>
+                    <th class="p-3 text-right">Price</th>
+                    <th class="p-3 text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for line in subscription.lines.all %}
+                <tr>
+                    <td class="p-3 font-semibold text-slate-800">
+                        {{ line.product.name }}
+                        {% if line.variant %}
+                        <span class="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 ml-1">
+                            {{ line.variant.variant_value }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3 text-center font-bold">{{ line.quantity }}</td>
+                    <td class="p-3 text-right font-mono">${{ line.unit_price|floatformat:2 }}</td>
+                    <td class="p-3 text-right font-mono font-bold text-slate-900">${{ line.total_amount|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="p-4 bg-slate-50 border-t border-slate-100 flex justify-end text-xs">
+            <div class="text-right">
+                <span class="text-slate-500">Recurring Price:</span>
+                <span class="font-mono font-black text-base text-purple-900 ml-2">
+                    ${{ subscription.calculate_grand_total|floatformat:2 }} / {{ subscription.plan.get_billing_interval_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Invoices -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 space-y-4">
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Invoices & Receipts</h2>
+        {% if invoices %}
+        <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100">
+                <tr>
+                    <th class="p-3">Invoice #</th>
+                    <th class="p-3">Date</th>
+                    <th class="p-3">Due Date</th>
+                    <th class="p-3 text-right">Amount</th>
+                    <th class="p-3 text-center">Status</th>
+                    <th class="p-3 text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for inv in invoices %}
+                <tr>
+                    <td class="p-3 font-mono font-bold text-[#714B67]">{{ inv.invoice_number }}</td>
+                    <td class="p-3 text-slate-600">{{ inv.invoice_date }}</td>
+                    <td class="p-3 text-slate-600">{{ inv.due_date }}</td>
+                    <td class="p-3 text-right font-mono font-bold">${{ inv.total_amount|floatformat:2 }}</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                            {% if inv.status == 'paid' %}bg-emerald-100 text-emerald-800
+                            {% elif inv.is_overdue %}bg-rose-100 text-rose-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {{ inv.get_status_display }}
+                        </span>
+                    </td>
+                    <td class="p-3 text-center">
+                        <a href="{% url 'portal_invoice_detail' inv.id %}" class="text-xs text-[#714B67] hover:underline font-semibold">View & Pay</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-xs text-slate-400">No invoices issued for this subscription yet.</p>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

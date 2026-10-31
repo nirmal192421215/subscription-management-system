@@ -1,0 +1,150 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Invoices & Billing - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Top Header -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="p-2 rounded-xl bg-purple-100 text-[#714B67]">
+                    <i class="fa-solid fa-receipt text-lg"></i>
+                </span>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Customer Invoices</h1>
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                "Each invoice moves from Draft to Confirmed to Paid... At any moment, see which are paid and which are still outstanding." (Scene 4 & 6)
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'run_billing_day' %}" class="bg-[#714B67] hover:bg-[#5c3d54] text-white px-4 py-2 rounded-xl text-xs font-bold shadow-sm transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-bolt text-amber-300"></i>
+                <span>Billing Day Batch Run</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters & Status Tabs -->
+    <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <form method="GET" class="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <!-- Search -->
+            <div class="relative w-full sm:w-72">
+                <input type="text" name="q" value="{{ search_q|default:'' }}"
+                    class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-[#714B67] focus:outline-none"
+                    placeholder="Search invoice # or customer...">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </span>
+            </div>
+
+            <!-- Filter Buttons -->
+            <div class="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto">
+                <a href="{% url 'invoice_list' %}"
+                    class="px-3 py-1.5 rounded-lg font-semibold transition {% if not current_status and not overdue_filter %}bg-[#714B67] text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    All Invoices
+                </a>
+                <a href="?overdue=1"
+                    class="px-3 py-1.5 rounded-lg font-semibold transition {% if overdue_filter == '1' %}bg-rose-600 text-white{% else %}bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200{% endif %}">
+                    <i class="fa-solid fa-triangle-exclamation mr-1"></i> Overdue Only
+                </a>
+                <a href="?status=draft"
+                    class="px-3 py-1.5 rounded-lg font-semibold transition {% if current_status == 'draft' %}bg-[#714B67] text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    Draft
+                </a>
+                <a href="?status=confirmed"
+                    class="px-3 py-1.5 rounded-lg font-semibold transition {% if current_status == 'confirmed' %}bg-[#714B67] text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    Confirmed
+                </a>
+                <a href="?status=paid"
+                    class="px-3 py-1.5 rounded-lg font-semibold transition {% if current_status == 'paid' %}bg-[#714B67] text-white{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    Paid
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Invoices Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-3.5">Invoice #</th>
+                        <th class="p-3.5">Customer</th>
+                        <th class="p-3.5">Invoice Date</th>
+                        <th class="p-3.5">Due Date</th>
+                        <th class="p-3.5 text-right">Total Amount</th>
+                        <th class="p-3.5 text-right">Balance Due</th>
+                        <th class="p-3.5 text-center">Status</th>
+                        <th class="p-3.5 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for inv in invoices %}
+                    <tr class="hover:bg-slate-50 transition {% if inv.is_overdue %}bg-rose-50/20{% endif %}">
+                        <td class="p-3.5 font-bold font-mono text-[#714B67]">
+                            <a href="{% url 'invoice_detail' inv.id %}" class="hover:underline">{{ inv.invoice_number }}</a>
+                            {% if inv.subscription %}
+                            <span class="block text-[10px] text-slate-400 font-normal">Sub: {{ inv.subscription.subscription_number }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3.5">
+                            <div class="font-bold text-slate-900">{{ inv.customer.display_name }}</div>
+                            <div class="text-[11px] text-slate-400">{{ inv.customer.email }}</div>
+                        </td>
+                        <td class="p-3.5 text-slate-600">{{ inv.invoice_date }}</td>
+                        <td class="p-3.5 font-medium {% if inv.is_overdue %}text-rose-600 font-bold{% else %}text-slate-600{% endif %}">
+                            {{ inv.due_date }}
+                            {% if inv.is_overdue %}
+                            <span class="block text-[10px] text-rose-500 font-bold">({{ inv.overdue_days }}d overdue)</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
+                            ${{ inv.total_amount|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-right font-mono font-bold text-sm {% if inv.balance_due > 0 %}text-rose-600{% else %}text-emerald-600{% endif %}">
+                            ${{ inv.balance_due|floatformat:2 }}
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase
+                                {% if inv.status == 'paid' %}bg-emerald-100 text-emerald-800
+                                {% elif inv.is_overdue %}bg-rose-100 text-rose-800
+                                {% elif inv.status == 'confirmed' %}bg-blue-100 text-blue-800
+                                {% elif inv.status == 'cancelled' %}bg-slate-200 text-slate-700
+                                {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                {% if inv.is_overdue %}OVERDUE{% else %}{{ inv.get_status_display }}{% endif %}
+                            </span>
+                        </td>
+                        <td class="p-3.5 text-center">
+                            <div class="flex items-center justify-center space-x-1.5">
+                                <a href="{% url 'invoice_detail' inv.id %}" class="text-slate-600 hover:text-[#714B67] p-1.5" title="View Invoice">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                {% if inv.balance_due > 0 and inv.status != 'cancelled' %}
+                                <a href="{% url 'payment_record' inv.id %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded-lg text-[11px] font-bold shadow-sm transition" title="Record Payment">
+                                    <i class="fa-solid fa-dollar-sign"></i> Pay
+                                </a>
+                                {% endif %}
+                                <a href="{% url 'invoice_pdf' inv.id %}" class="text-slate-500 hover:text-purple-600 p-1.5" title="PDF">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="p-10 text-center text-slate-400">
+                            No invoices found matching criteria.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Invoice {{ invoice.invoice_number }} - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div>
+                <a href="{% url 'portal_invoices' %}" class="text-xs text-[#714B67] font-semibold hover:underline">&larr; Back to Invoices</a>
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight mt-1">{{ invoice.invoice_number }}</h1>
+                <p class="text-xs text-slate-500 mt-0.5">Date: {{ invoice.invoice_date }} &bull; Due: {{ invoice.due_date }}</p>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase
+                    {% if invoice.status == 'paid' %}bg-emerald-100 text-emerald-800
+                    {% elif invoice.is_overdue %}bg-rose-100 text-rose-800
+                    {% else %}bg-blue-100 text-blue-800{% endif %}">
+                    {% if invoice.is_overdue %}OVERDUE{% else %}{{ invoice.get_status_display }}{% endif %}
+                </span>
+
+                {% if invoice.balance_due > 0 %}
+                <a href="{% url 'portal_pay_invoice' invoice.id %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-xl text-xs font-bold shadow-md transition">
+                    Pay ${{ invoice.balance_due|floatformat:2 }}
+                </a>
+                {% endif %}
+
+                <a href="{% url 'portal_invoice_pdf' invoice.id %}" class="bg-slate-100 hover:bg-slate-200 text-slate-700 p-2 rounded-xl text-xs font-bold transition" title="Download PDF">
+                    <i class="fa-solid fa-file-pdf text-[#714B67]"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Line items table -->
+        <table class="w-full text-left text-xs my-6">
+            <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100">
+                <tr>
+                    <th class="p-3">Item Description</th>
+                    <th class="p-3 text-center">Qty</th>
+                    <th class="p-3 text-right">Unit Price</th>
+                    <th class="p-3 text-right">Tax</th>
+                    <th class="p-3 text-right">Total</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for line in invoice.lines.all %}
+                <tr>
+                    <td class="p-3 font-semibold text-slate-800">{{ line.description }}</td>
+                    <td class="p-3 text-center">{{ line.quantity }}</td>
+                    <td class="p-3 text-right font-mono">${{ line.unit_price|floatformat:2 }}</td>
+                    <td class="p-3 text-right font-mono text-slate-500">${{ line.tax_amount|floatformat:2 }}</td>
+                    <td class="p-3 text-right font-mono font-bold text-slate-900">${{ line.line_total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Totals summary -->
+        <div class="p-4 bg-slate-50 rounded-xl flex justify-end text-xs">
+            <div class="w-64 space-y-1.5">
+                <div class="flex justify-between text-slate-600">
+                    <span>Subtotal:</span>
+                    <span class="font-mono font-bold">${{ invoice.subtotal|floatformat:2 }}</span>
+                </div>
+                {% if invoice.discount_amount > 0 %}
+                <div class="flex justify-between text-purple-700 font-semibold">
+                    <span>Discount:</span>
+                    <span class="font-mono font-bold">-${{ invoice.discount_amount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between text-slate-600">
+                    <span>Tax:</span>
+                    <span class="font-mono font-bold">+${{ invoice.tax_amount|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-200">
+                    <span>Total Amount:</span>
+                    <span class="font-mono">${{ invoice.total_amount|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-emerald-700 font-bold">
+                    <span>Paid to Date:</span>
+                    <span class="font-mono">-${{ invoice.amount_paid|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between text-sm font-black {% if invoice.balance_due > 0 %}text-rose-600{% else %}text-emerald-700{% endif %} pt-2 border-t border-slate-200">
+                    <span>Balance Due:</span>
+                    <span class="font-mono">${{ invoice.balance_due|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

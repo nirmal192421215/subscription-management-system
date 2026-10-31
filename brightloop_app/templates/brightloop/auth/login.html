@@ -1,0 +1,98 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Sign In - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto my-8">
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-[#714B67] px-8 py-6 text-white text-center">
+            <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-white/10 text-teal-300 mb-3">
+                <i class="fa-solid fa-lock text-xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold">Sign In to Brightloop</h2>
+            <p class="text-xs text-purple-200 mt-1">Unified recurring billing and subscription management</p>
+        </div>
+
+        <form method="POST" action="{% url 'login' %}" class="p-8 space-y-5">
+            {% csrf_token %}
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5" for="email">
+                    Email Address
+                </label>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-envelope text-sm"></i>
+                    </span>
+                    <input id="email" name="email" type="email" required autocomplete="email"
+                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#714B67] focus:border-transparent text-sm placeholder-slate-400 transition"
+                        placeholder="you@brightloop.com" value="{{ request.POST.email|default:'' }}">
+                </div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider" for="password">
+                        Password
+                    </label>
+                    <a href="{% url 'forgot_password' %}" class="text-xs text-[#714B67] hover:underline font-medium">
+                        Forgot Password?
+                    </a>
+                </div>
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                        <i class="fa-solid fa-key text-sm"></i>
+                    </span>
+                    <input id="password" name="password" type="password" required autocomplete="current-password"
+                        class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-[#714B67] focus:border-transparent text-sm placeholder-slate-400 transition"
+                        placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full py-3 px-4 bg-[#714B67] hover:bg-[#5c3d54] text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition flex items-center justify-center space-x-2">
+                <span>Sign In</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </form>
+
+        <div class="px-8 pb-6 text-center text-xs text-slate-500 border-t border-slate-100 pt-4">
+            New customer?
+            <a href="{% url 'register' %}" class="text-[#714B67] font-semibold hover:underline">
+                Create a small business account
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Demo Accounts Box for Evaluators -->
+    <div class="mt-8 bg-slate-100 rounded-2xl p-5 border border-slate-200">
+        <div class="flex items-center space-x-2 mb-3">
+            <i class="fa-solid fa-id-badge text-[#714B67]"></i>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Quick-Fill Demo Credentials</h3>
+        </div>
+        <div class="grid grid-cols-1 gap-2">
+            {% for da in demo_accounts %}
+            <button type="button" onclick="fillCreds('{{ da.email }}', '{{ da.pass }}')"
+                class="text-left bg-white hover:bg-purple-50 p-3 rounded-xl border border-slate-200 hover:border-purple-300 transition group flex items-center justify-between">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-xs text-slate-800">{{ da.role }}</span>
+                        <span class="text-[11px] text-purple-700 font-mono">{{ da.email }}</span>
+                    </div>
+                    <p class="text-[11px] text-slate-500 mt-0.5">{{ da.desc }}</p>
+                </div>
+                <span class="text-xs font-semibold text-[#714B67] opacity-0 group-hover:opacity-100 transition">
+                    Fill &rarr;
+                </span>
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+function fillCreds(email, pass) {
+    document.getElementById('email').value = email;
+    document.getElementById('password').value = pass;
+}
+</script>
+{% endblock %}

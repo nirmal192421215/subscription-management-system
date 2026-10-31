@@ -1,0 +1,82 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}My Invoices - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+        <h1 class="text-2xl font-black text-slate-900 tracking-tight">My Invoices & Receipts</h1>
+        <p class="text-xs text-slate-500 mt-1">
+            Download PDF copies and pay outstanding balances directly online
+        </p>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-slate-600 font-semibold border-b border-slate-100 uppercase tracking-wider">
+                <tr>
+                    <th class="p-3.5">Invoice #</th>
+                    <th class="p-3.5">Date</th>
+                    <th class="p-3.5">Due Date</th>
+                    <th class="p-3.5 text-right">Total Amount</th>
+                    <th class="p-3.5 text-right">Amount Paid</th>
+                    <th class="p-3.5 text-right">Balance Due</th>
+                    <th class="p-3.5 text-center">Status</th>
+                    <th class="p-3.5 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+                {% for inv in invoices %}
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-3.5 font-bold font-mono text-[#714B67]">
+                        <a href="{% url 'portal_invoice_detail' inv.id %}" class="hover:underline">{{ inv.invoice_number }}</a>
+                    </td>
+                    <td class="p-3.5 text-slate-600">{{ inv.invoice_date }}</td>
+                    <td class="p-3.5 font-medium {% if inv.is_overdue %}text-rose-600 font-bold{% else %}text-slate-600{% endif %}">
+                        {{ inv.due_date }}
+                        {% if inv.is_overdue %}
+                        <span class="block text-[10px] text-rose-500 font-bold">OVERDUE</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-3.5 text-right font-mono font-bold text-slate-900 text-sm">
+                        ${{ inv.total_amount|floatformat:2 }}
+                    </td>
+                    <td class="p-3.5 text-right font-mono text-emerald-700">
+                        ${{ inv.amount_paid|floatformat:2 }}
+                    </td>
+                    <td class="p-3.5 text-right font-mono font-bold {% if inv.balance_due > 0 %}text-rose-600{% else %}text-emerald-700{% endif %} text-sm">
+                        ${{ inv.balance_due|floatformat:2 }}
+                    </td>
+                    <td class="p-3.5 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase
+                            {% if inv.status == 'paid' %}bg-emerald-100 text-emerald-800
+                            {% elif inv.is_overdue %}bg-rose-100 text-rose-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {% if inv.is_overdue %}OVERDUE{% else %}{{ inv.get_status_display }}{% endif %}
+                        </span>
+                    </td>
+                    <td class="p-3.5 text-center">
+                        <div class="flex items-center justify-center space-x-2">
+                            {% if inv.balance_due > 0 %}
+                            <a href="{% url 'portal_pay_invoice' inv.id %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition shadow-sm">
+                                Pay Now
+                            </a>
+                            {% endif %}
+                            <a href="{% url 'portal_invoice_pdf' inv.id %}" class="text-slate-500 hover:text-purple-700 p-1" title="Download PDF">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="p-10 text-center text-slate-400">No invoices on file.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

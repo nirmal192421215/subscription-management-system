@@ -1,0 +1,149 @@
+{% extends 'brightloop/base.html' %}
+
+{% block title %}Customer Portal - Brightloop Software{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Welcome Hero -->
+    <div class="odoo-bg-gradient rounded-3xl p-8 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+            <span class="text-xs font-bold uppercase tracking-widest bg-white/20 text-teal-200 px-3 py-1 rounded-full">
+                Customer Self-Service Portal
+            </span>
+            <h1 class="text-3xl font-black tracking-tight mt-3">Welcome, {{ user.display_name }}</h1>
+            <p class="text-xs text-purple-100 mt-1 max-w-xl">
+                "Customers want to see and manage their own subscriptions without having to email anyone." (Scene 1 & 2)
+            </p>
+        </div>
+
+        <div class="flex items-center space-x-3">
+            <a href="{% url 'portal_subscriptions' %}" class="bg-white text-[#714B67] hover:bg-teal-50 px-5 py-2.5 rounded-xl text-xs font-bold shadow-md transition">
+                Manage Subscriptions
+            </a>
+            <a href="{% url 'portal_invoices' %}" class="bg-white/20 hover:bg-white/30 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition">
+                View Invoices
+            </a>
+        </div>
+    </div>
+
+    <!-- Metric Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Active Subscriptions</span>
+            <div class="text-3xl font-black text-slate-900 mt-2">{{ active_subs_count }}</div>
+            <a href="{% url 'portal_subscriptions' %}" class="text-xs text-[#714B67] hover:underline font-semibold mt-2 inline-block">
+                View all &rarr;
+            </a>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Unpaid Invoices</span>
+            <div class="text-3xl font-black {% if unpaid_invoices_count > 0 %}text-amber-600{% else %}text-emerald-600{% endif %} mt-2">
+                {{ unpaid_invoices_count }}
+            </div>
+            <span class="text-xs text-slate-400 mt-2 inline-block">Awaiting settlement</span>
+        </div>
+
+        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Outstanding Balance</span>
+            <div class="text-3xl font-black {% if total_due > 0 %}text-rose-600{% else %}text-slate-900{% endif %} mt-2 font-mono">
+                ${{ total_due|floatformat:2 }}
+            </div>
+            <span class="text-xs text-slate-400 mt-2 inline-block">Across all accounts</span>
+        </div>
+    </div>
+
+    <!-- Active Subscriptions Quick View -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <i class="fa-solid fa-file-contract text-[#714B67]"></i>
+                <span>Your Subscriptions</span>
+            </h2>
+            <a href="{% url 'portal_subscriptions' %}" class="text-xs text-[#714B67] hover:underline font-semibold">View All</a>
+        </div>
+
+        <div class="space-y-3">
+            {% for sub in subscriptions %}
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-purple-50/30 transition">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-900 text-sm font-mono">{{ sub.subscription_number }}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                            {% if sub.status == 'active' %}bg-emerald-100 text-emerald-800
+                            {% elif sub.status == 'paused' %}bg-amber-100 text-amber-800
+                            {% elif sub.status == 'closed' %}bg-slate-200 text-slate-700
+                            {% else %}bg-purple-100 text-purple-800{% endif %}">
+                            {{ sub.get_status_display }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-1">
+                        <strong>{{ sub.plan.name }}</strong> &bull; Next Billing: {{ sub.next_billing_date|default:"N/A" }}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="text-sm font-black text-slate-900 font-mono">${{ sub.calculate_grand_total|floatformat:2 }}</span>
+                    <a href="{% url 'portal_subscription_detail' sub.id %}" class="bg-white hover:bg-slate-100 text-[#714B67] border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition">
+                        Manage &rarr;
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-xs text-slate-400 py-4 text-center">No subscriptions found for your account.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Invoices Quick View -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+            <h2 class="text-base font-bold text-slate-900 flex items-center space-x-2">
+                <i class="fa-solid fa-receipt text-[#714B67]"></i>
+                <span>Recent Invoices</span>
+            </h2>
+            <a href="{% url 'portal_invoices' %}" class="text-xs text-[#714B67] hover:underline font-semibold">View All</a>
+        </div>
+
+        <div class="space-y-3">
+            {% for inv in invoices %}
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-purple-50/30 transition">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-bold text-slate-900 text-sm font-mono">{{ inv.invoice_number }}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                            {% if inv.status == 'paid' %}bg-emerald-100 text-emerald-800
+                            {% elif inv.is_overdue %}bg-rose-100 text-rose-800
+                            {% else %}bg-blue-100 text-blue-800{% endif %}">
+                            {% if inv.is_overdue %}OVERDUE{% else %}{{ inv.get_status_display }}{% endif %}
+                        </span>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Date: {{ inv.invoice_date }} &bull; Due: {{ inv.due_date }}
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="text-right">
+                        <div class="text-sm font-black text-slate-900 font-mono">${{ inv.total_amount|floatformat:2 }}</div>
+                        {% if inv.balance_due > 0 %}
+                        <div class="text-[11px] font-bold text-rose-600 font-mono">${{ inv.balance_due|floatformat:2 }} due</div>
+                        {% endif %}
+                    </div>
+                    {% if inv.balance_due > 0 %}
+                    <a href="{% url 'portal_pay_invoice' inv.id %}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm transition">
+                        Pay Now
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'portal_invoice_detail' inv.id %}" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition">
+                        Details
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-xs text-slate-400 py-4 text-center">No invoices issued yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
