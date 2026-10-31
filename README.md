@@ -3,6 +3,27 @@
 
 ---
 
+## 🌐 Live Production Deployment
+
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel%20Deployed-success?style=for-the-badge&logo=vercel)](https://subscription-management-system-steel.vercel.app/)
+[![Database](https://img.shields.io/badge/Database-Neon%20Postgres-blue?style=for-the-badge&logo=postgresql)](https://subscription-management-system-steel.vercel.app/)
+[![Python](https://img.shields.io/badge/Python-3.13%20%7C%20Django%206-informational?style=for-the-badge&logo=python)](https://subscription-management-system-steel.vercel.app/)
+
+> 🚀 **Live Application URL**: **[https://subscription-management-system-steel.vercel.app/](https://subscription-management-system-steel.vercel.app/)**
+> 
+> *Production deployment hosted on Vercel Serverless with Neon Managed PostgreSQL, WhiteNoise static delivery, and ReportLab PDF compilation.*
+
+### ⚡ Instant Demo Credentials
+Evaluators and judges can log into the live deployment or use the built-in **Quick Role Switcher** dropdown in the navbar:
+
+| Role | Email | Password | Persona & Key Access |
+| :--- | :--- | :--- | :--- |
+| **Administrator** | `admin@brightloop.com` | `Brightloop#Admin2026!` | **Elena Vance**: Full audit logs, revenue metrics, staff directory, catalog & tax controls |
+| **Staff** | `staff@brightloop.com` | `Brightloop#Staff2026!` | **Sarah Jenkins**: Batch billing runs, dunning engine, quote-to-subscription, manual payments |
+| **Customer** | `customer@brightloop.com` | `Brightloop#Cust2026!` | **Arthur Pendleton (Acme)**: Self-service portal, view active subs, pay overdue invoices |
+
+---
+
 ## 🌟 Executive Overview
 **Brightloop Software** is a full-featured, enterprise-grade subscription management and recurring billing web platform built with **Python 3.13 and Django 6**. It was engineered specifically to solve the operational chaos of managing multi-tier subscriptions, quotes, variable billing intervals, auto-prorated invoicing, manual payment collection, tax compliance, and overdue receivables.
 
