@@ -2,15 +2,15 @@
 WSGI config for brightloop_project project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/6.1/howto/deployment/wsgi/
+Also exports ``app`` for Vercel serverless deployment.
 """
 
 import os
-
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'brightloop_project.settings')
 
 application = get_wsgi_application()
+
+# Alias for Vercel Serverless Function entrypoint
+app = application

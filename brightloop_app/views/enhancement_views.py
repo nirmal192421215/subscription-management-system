@@ -154,12 +154,17 @@ def dunning_send_view(request, invoice_id, level):
         'day7': 'Day 7 Follow-up Notice',
         'day14': 'Day 14 Final Notice — Action Required',
     }
+    from django.conf import settings
+    base_url = getattr(settings, 'BASE_URL', '') or request.build_absolute_uri('/').rstrip('/')
+    pay_link = f"{base_url}/portal/invoices/{invoice.id}/pay/"
+
     subject = f"[Brightloop] {level_labels.get(level, 'Payment Reminder')} — {invoice.invoice_number}"
     body = (
         f"Dear {invoice.customer.display_name},\n\n"
         f"This is a {level_labels.get(level, 'payment reminder')} for invoice "
         f"{invoice.invoice_number} with a balance of ${invoice.balance_due:.2f} "
         f"that was due on {invoice.due_date}.\n\n"
+        f"Pay directly online via your portal: {pay_link}\n\n"
         f"Please settle your account at your earliest convenience.\n\n"
         f"Regards,\nBrightloop Billing Team"
     )

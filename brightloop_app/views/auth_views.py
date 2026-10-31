@@ -100,6 +100,7 @@ def register_view(request):
 def forgot_password_view(request):
     """
     Scene 1: If they forget it later, a reset link should arrive at their registered email.
+    Uses canonical BASE_URL if configured, or dynamically falls back to request origin.
     """
     reset_link_generated = None
     if request.method == 'POST':
@@ -107,7 +108,9 @@ def forgot_password_view(request):
         try:
             user = User.objects.get(email=email)
             token = PasswordResetToken.objects.create(user=user)
-            reset_url = request.build_absolute_uri(f"/reset-password/{token.token}/")
+            from django.conf import settings
+            base_url = getattr(settings, 'BASE_URL', '') or request.build_absolute_uri('/').rstrip('/')
+            reset_url = f"{base_url}/reset-password/{token.token}/"
             reset_link_generated = reset_url
             messages.success(request, f"A password reset link has been dispatched to {email}.")
         except User.DoesNotExist:

@@ -29,23 +29,26 @@ Open **[http://localhost:8000](http://localhost:8000)** in your browser.
 
 ---
 
-## 🎭 Pre-Loaded Demo Personas & Instant Switcher
-A built-in **Quick Role Switcher** in the top navigation bar allows judges and evaluators to switch between personas with a single click without manually logging out:
+## 🔑 Demo Logins
+The system provides one clean, production-grade login per role with complex passwords meeting the strict security specification (>8 chars, uppercase, lowercase, special character).
+
+A built-in **Quick Role Switcher** in the top navigation bar also allows judges and evaluators to switch between these personas instantly with a single click:
 
 | Role | Email | Password | Persona & Privileges |
 | :--- | :--- | :--- | :--- |
-| **Administrator** | `admin@brightloop.com` | `Admin@12345` | **Elena Vance (CEO / Admin)**: Full administrative oversight, staff directory, audit logs, tax rules, and discount management. |
-| **Sales Rep (Staff)** | `sarah@brightloop.com` | `Staff@12345` | **Sarah Jenkins (Sales Lead)**: Quotation templates, converting quotes to active subscriptions, PDF quote generation. |
-| **Billing Specialist** | `david@brightloop.com` | `Staff@12345` | **David Kim (Billing Specialist)**: Billing day batch execution, dunning follow-up, recording payments, reconciling invoices. |
-| **Customer (Enterprise)** | `acme@acmecorp.com` | `Acme@12345` | **Acme Corporation**: Enterprise Yearly plan (15 seats) with multi-product add-ons. |
-| **Customer (SMB)** | `bistro@cornercafe.com` | `Corner@12345` | **Corner Cafe & Bakery**: Monthly Starter plan with self-service portal controls. |
-| **Customer (Overdue)** | `spark@sparklabs.com` | `Spark@12345` | **Spark Labs Inc.**: Active subscription with an overdue invoice requiring follow-up. |
-
-> **Password Complexity Rule**: All passwords satisfy `BrightloopPasswordValidator` (>8 characters, 1 uppercase, 1 lowercase, 1 special character).
+| **Administrator** | `admin@brightloop.com` | `Brightloop#Admin2026!` | **Elena Vance (CEO / Admin)**: Full administrative oversight, staff directory, audit logs, tax rules, and discount management. |
+| **Staff** | `staff@brightloop.com` | `Brightloop#Staff2026!` | **Sarah Jenkins (Internal Staff)**: Quotation templates, converting quotes to active subscriptions, PDF quote generation, and payment recording. |
+| **Customer** | `customer@brightloop.com` | `Brightloop#Cust2026!` | **Arthur Pendleton (Acme Corporation)**: Customer portal, self-service subscription lifecycle controls, online invoice payments. |
 
 ---
 
 ## 🛠️ CLI Management Commands
+
+### Repeatable Seed Script
+Wipes and populates the database with the clean, production-ready dataset (3-4 products with variants, 3 plans, all 5 subscription statuses, paid/outstanding/overdue invoices, active discount):
+```bash
+./venv/bin/python manage.py seed_brightloop_data
+```
 
 ### Run Billing Day Engine
 Simulates automated daily billing with idempotency protection (never duplicate-bills):
@@ -55,12 +58,6 @@ Simulates automated daily billing with idempotency protection (never duplicate-b
 
 # Or run for a specific target date:
 ./venv/bin/python manage.py run_billing_day --date 2026-11-15
-```
-
-### Re-seed Clean Demo Data Anytime
-Wipes and populates the database with realistic business records:
-```bash
-./venv/bin/python manage.py seed_brightloop_data
 ```
 
 ### Run Comprehensive Automated Test Suite

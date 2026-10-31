@@ -1,6 +1,23 @@
+# Python & Virtual Environments
 venv/
+ENV/
+env/
 *.pyc
 __pycache__/
+
+# Secrets & Local Configuration
+.env
+.env.local
+.env.*
+!.env.example
+
+# OS generated
 .DS_Store
+Thumbs.db
+
+# Django & Static Collection
+staticfiles/
 *.sqlite3-journal
 
+# Vercel Build Artifacts
+.vercel/
