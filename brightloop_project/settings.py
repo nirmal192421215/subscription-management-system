@@ -44,6 +44,20 @@ BASE_URL = os.environ.get('BASE_URL', '').rstrip('/')
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 
+# CSRF trusted origins for HTTPS deployments (Vercel & custom domains)
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',
+    'https://subscription-management-system-steel.vercel.app',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+]
+csrf_origins_raw = os.environ.get('CSRF_TRUSTED_ORIGINS', '')
+if csrf_origins_raw:
+    CSRF_TRUSTED_ORIGINS.extend([o.strip() for o in csrf_origins_raw.split(',') if o.strip()])
+if BASE_URL and BASE_URL.startswith(('http://', 'https://')):
+    if BASE_URL not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(BASE_URL)
+
 if not DEBUG:
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
